@@ -57,8 +57,9 @@ local emoteData = {
     {Name = "Grooming", ID = "117809429848082"}, 
     {Name = "Kicking Feet", ID = "103155280474275"}, 
     {Name = "Cat Pose", ID = "79458008243992"}, 
-    {Name = "Feign Hurt", ID = "103426546772784"}, -- TUTAJ dodałem brakujący przecinek
-    {Name = "Pies Szczeka", ID = "131027079503547"} -- TUTAJ naprawiłem przecinek między Name a ID
+    {Name = "Feign Hurt", ID = "103426546772784"}, 
+    {Name = "Pies Szczeka", ID = "131027079503547"},
+    {Name = "Playing💀", ID = "86489858224707"},
 } 
 
 -- Create Scrolling List for Emotes 
