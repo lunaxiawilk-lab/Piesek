@@ -134,7 +134,7 @@ local loadedManualEmotes = {}
 
 local customRunId = "108985707207747" 
 local customWalkId = "84792004932424" 
-local customIdle1Id = "83978437529962" 
+local customIdle1Id = "129424042135317" 
 local customIdle2Id = "73644021399239" 
 
 -- Helper: Convert ID 
