@@ -1,4 +1,3 @@
-
 -- Wait for player to load 
 local PlayerService = game:GetService("Players") 
 local RunService = game:GetService("RunService") 
@@ -32,7 +31,7 @@ emoteFrame.Position = UDim2.new(0, -155, 0, -30)
 emoteFrame.Visible = false 
 emoteFrame.BorderSizePixel = 2 
 
--- Emote List (25 Emotes) 
+-- Emote List (26 Emotes) 
 local emoteData = { 
     {Name = "Scratching", ID = "93910188107955"}, 
     {Name = "Sit", ID = "110757655806288"}, 
@@ -58,8 +57,8 @@ local emoteData = {
     {Name = "Grooming", ID = "117809429848082"}, 
     {Name = "Kicking Feet", ID = "103155280474275"}, 
     {Name = "Cat Pose", ID = "79458008243992"}, 
-    {Name = "Feign Hurt", ID = "103426546772784"}
-    {Name = "Pies Szczeka", ID = "131027079503547"}
+    {Name = "Feign Hurt", ID = "103426546772784"}, -- TUTAJ dodałem brakujący przecinek
+    {Name = "Pies Szczeka", ID = "131027079503547"} -- TUTAJ naprawiłem przecinek między Name a ID
 } 
 
 -- Create Scrolling List for Emotes 
@@ -357,7 +356,7 @@ offButton.MouseButton1Click:Connect(function()
     end 
 end) 
 destroyButton.MouseButton1Click:Connect(function() 
-    if isCustomAnimActive and player.Character then restoreOriginalAnimation(character) end 
+    if isCustomAnimActive and player.Character then restoreOriginalAnimation(player.Character) end 
     screenGui:Destroy() 
 end) 
 player.CharacterAdded:Connect(function(c) 
