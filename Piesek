@@ -345,7 +345,7 @@ emoteToggleButton.MouseButton1Click:Connect(function() emoteFrame.Visible = not 
 onButton.MouseButton1Click:Connect(function() 
     if not isCustomAnimActive then 
         isCustomAnimActive = true 
-        statusLabel.Text = "Status: Online"; statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0) 
+        statusLabel.Text = "Status: Online"; statusLabel.TextColor3 = Color3.fromRGB(0, 191, 255) -- Zmiana na jasnoniebieski status online
         if player.Character then applyCustomAnimation(player.Character) end 
     end 
 end) 
@@ -356,7 +356,7 @@ offButton.MouseButton1Click:Connect(function()
     end 
 end) 
 destroyButton.MouseButton1Click:Connect(function() 
-    if isCustomAnimActive and player.Character then restoreOriginalAnimation(player.Character) end 
+    if isCustomAnimActive and player.Character then restoreOriginalAnimation(character) end 
     screenGui:Destroy() 
 end) 
 player.CharacterAdded:Connect(function(c) 
