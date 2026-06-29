@@ -50,7 +50,7 @@ local emoteData = {
     {Name = "Sit-Dog", ID = "105298725756719"}, 
     {Name = "Curious Sat Pose", ID = "76261461321661"}, 
     {Name = "Nap", ID = "105016815489641"}, 
-    {Name = "Beg", ID = "77895377417984"}, 
+    {Name = "Beg", ID = "120467296669059"}, 
     {Name = "Shy", ID = "99425439298305"}, 
     {Name = "Checking", ID = "73644021399239"}, 
     {Name = "Contemplate", ID = "129641195700400"}, 
