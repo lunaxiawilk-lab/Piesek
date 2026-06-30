@@ -352,7 +352,7 @@ onButton.MouseButton1Click:Connect(function()
 end) 
 offButton.MouseButton1Click:Connect(function() 
     if isCustomAnimActive then 
-        statusLabel.Text = "Status: Offline"; statusLabel.TextColor3 = Color3.fromRGB(255, 0, 0) 
+        statusLabel.Text = "Status: Offline"; statusLabel.TextColor3 = Color3.fromRGB(255, 120, 0) 
         if player.Character then restoreOriginalAnimation(player.Character) end 
     end 
 end) 
