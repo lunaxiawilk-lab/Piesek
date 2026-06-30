@@ -34,7 +34,7 @@ emoteFrame.BorderSizePixel = 2
 -- Emote List (26 Emotes) 
 local emoteData = { 
     {Name = "Scratching", ID = "93910188107955"}, 
-    {Name = "Sit", ID = "110757655806288"}, 
+    {Name = "Sit", ID = "129575609080331"}, 
     {Name = "Lean Forward", ID = "123771165433588"}, 
     {Name = "Playful", ID = "80706795731202"}, 
     {Name = "Turn Away", ID = "107643451592152"}, 
