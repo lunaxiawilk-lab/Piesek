@@ -50,7 +50,7 @@ local emoteData = {
     {Name = "Sit-Dog", ID = "105298725756719"}, 
     {Name = "Curious Sat Pose", ID = "76261461321661"}, 
     {Name = "Nap", ID = "105016815489641"}, 
-    {Name = "Beg", ID = "120467296669059"}, 
+    {Name = "Beg", ID = "129424042135317"}, 
     {Name = "Shy", ID = "99425439298305"}, 
     {Name = "Checking", ID = "73644021399239"}, 
     {Name = "Contemplate", ID = "129641195700400"}, 
@@ -135,7 +135,7 @@ local loadedManualEmotes = {}
 
 local customRunId = "108985707207747" 
 local customWalkId = "84792004932424" 
-local customIdle1Id = "129424042135317" 
+local customIdle1Id = "120467296669059" 
 local customIdle2Id = "73644021399239" 
 
 -- Helper: Convert ID 
