@@ -12,7 +12,7 @@ player:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui") 
 screenGui.Parent = player.PlayerGui 
 screenGui.ResetOnSpawn = false 
-screenGui.Name = "GuiVersion22" 
+screenGui.Name = "GuiVersion22_Fixed" 
 
 -- Create Main Frame 
 local frame = Instance.new("Frame") 
@@ -32,7 +32,7 @@ emoteFrame.Position = UDim2.new(0, -155, 0, -30)
 emoteFrame.Visible = false 
 emoteFrame.BorderSizePixel = 2 
 
--- Manifest bez konfliktowych nazw (zmieniony z emoteData)
+-- Manifest bez konfliktowych nazw
 local customPoseManifest = { 
     {Name = "Scratching", ID = "93910188107955"}, 
     {Name = "Sit", ID = "129575609080331"}, 
@@ -202,10 +202,17 @@ local function applyCustomAnimation(character)
     local animator = humanoid:WaitForChild("Animator", 10) or humanoid:FindFirstChildOfClass("Animator") 
     if not animator then return end 
 
-    -- AGRESYWNE WYŁĄCZENIE KONTROLI GRY (Pizza Place Fix)
+    -- AGRESYWNE WYŁĄCZENIE KONTROLI GRY (Pizza Place Log Fix)
     local gameAnimate = character:FindFirstChild("Animate") 
     if gameAnimate then gameAnimate:Destroy() end 
     humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false) 
+
+    -- Wyłączenie lokalnych skryptów zarządzających petami gry, by zniknął log "Pet is NULL"
+    for _, obj in ipairs(player.PlayerGui:GetDescendants()) do
+        if obj:IsA("LocalScript") and (obj.Name:lower():match("pet") or obj.Name:lower():match("anim")) then
+            obj.Disabled = true
+        end
+    end
 
     for _, conn in pairs(charConnections) do conn:Disconnect() end 
     charConnections = {} 
@@ -226,10 +233,10 @@ local function applyCustomAnimation(character)
     customWalkTrack = animator:LoadAnimation(wAnim); customWalkTrack.Priority = Enum.AnimationPriority.Action4 
 
     local a1 = Instance.new("Animation"); a1.AnimationId = getTrueAnimationId(customIdle1Id) 
-    idleTrack1 = animator:LoadAnimation(a1); idleTrack1.Priority = Enum.AnimationPriority.Action3 
+    idleTrack1 = animator:LoadAnimation(a1); idleTrack1.Priority = Enum.AnimationPriority.Action4 
     
     local a2 = Instance.new("Animation"); a2.AnimationId = getTrueAnimationId(customIdle2Id) 
-    idleTrack2 = animator:LoadAnimation(a2); idleTrack2.Priority = Enum.AnimationPriority.Action3 
+    idleTrack2 = animator:LoadAnimation(a2); idleTrack2.Priority = Enum.AnimationPriority.Action4 
 
     loadedPoseTracks = {} 
     for _, data in ipairs(customPoseManifest) do 
@@ -251,6 +258,10 @@ local function applyCustomAnimation(character)
         if not isCustomAnimActive then return end 
         local state = humanoid:GetState() 
         local isSpecialState = isSpecialMovementState(state) 
+
+        -- Wymuszenie czyszczenia starego skryptu gry jeśli się odrodzi
+        local loopAnimate = character:FindFirstChild("Animate")
+        if loopAnimate then loopAnimate:Destroy() end
 
         if not isSpecialState then 
             for motor, c0 in pairs(originalC0s) do 
@@ -376,5 +387,5 @@ destroyButton.MouseButton1Click:Connect(function()
     screenGui:Destroy() 
 end) 
 player.CharacterAdded:Connect(function(c) 
-    if isCustomAnimActive then task.wait(0.5); applyCustomAnimation(c) end 
+    if isCustomAnimActive then task.wait(0.8); applyCustomAnimation(c) end 
 end)
