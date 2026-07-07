@@ -146,10 +146,10 @@ local customIdle1Id = "120467296669059"
 local customIdle2Id = "73644021399239" 
 
 -- NOWE MIEJSCA NA TWOJE ID: (Podmień te zera na prawdziwe ID jak je znajdziesz!)
-local customJumpId = "0"      -- Animacja wyskoku w górę
-local customFallId = "0"      -- Animacja spadania w dół
-local customSwimId = "0"      -- Animacja pływania w wodzie
-local customSwimIdleId = "0"  -- Animacja stania w miejscu w wodzie
+local customJumpId = "127131085046464"      -- Animacja wyskoku w górę
+local customFallId = "127131085046464"      -- Animacja spadania w dół
+local customSwimId = "133730049132231"      -- Animacja pływania w wodzie
+local customSwimIdleId = "121351481995026"  -- Animacja stania w miejscu w wodzie
 
 -- Helper: Convert ID 
 local function getTrueAnimationId(id) 
