@@ -10,45 +10,56 @@ player:WaitForChild("PlayerGui")
 
 -- Create ScreenGui 
 local screenGui = Instance.new("ScreenGui") 
-screenGui.Parent = player.PlayerGui 
 screenGui.ResetOnSpawn = false 
-screenGui.Name = "GuiVersion22_Scrolled" 
+screenGui.Name = "GuiVersion23_Priority" 
+
+-- PRIORYTETOWE WYŚWIETLANIE (Wymuszenie najwyższej warstwy i ominięcie marginesów)
+screenGui.DisplayOrder = 999999999 
+screenGui.IgnoreGuiInset = true    
+
+-- SYSTEM WYBORU NAJBEZPIECZNIEJSZEJ WARSTWY (CoreGui -> PlayerGui)
+local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+if success and coreGui then
+    screenGui.Parent = coreGui
+else
+    screenGui.Parent = player.PlayerGui
+end
 
 -- Create Main Drag Frame (The window container)
-local mainContainer = Instance.new("Frame")
-mainContainer.Parent = screenGui
+local mainContainer = Instance.new("Frame") 
+mainContainer.Parent = screenGui 
 mainContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Czarna główna ramka
 mainContainer.Size = UDim2.new(0, 200, 0, 100) 
 mainContainer.Position = UDim2.new(0.3, 0, 0.5, -50) 
 mainContainer.Active = true 
 mainContainer.Draggable = true 
-mainContainer.BorderSizePixel = 2
+mainContainer.BorderSizePixel = 2 
 
--- Create Scrolling List for MAIN BUTTONS (Nowe przewijanie w menu głównym)
-local mainScroll = Instance.new("ScrollingFrame")
-mainScroll.Parent = mainContainer
-mainScroll.Size = UDim2.new(1, -10, 1, -10)
-mainScroll.Position = UDim2.new(0, 5, 0, 5)
-mainScroll.BackgroundTransparency = 1
-mainScroll.ScrollBarThickness = 4
-mainScroll.CanvasSize = UDim2.new(0, 0, 0, 160) -- Większa przestrzeń na 5 przycisków
+-- Create Scrolling List for MAIN BUTTONS (Przewijanie menu głównego)
+local mainScroll = Instance.new("ScrollingFrame") 
+mainScroll.Parent = mainContainer 
+mainScroll.Size = UDim2.new(1, -10, 1, -10) 
+mainScroll.Position = UDim2.new(0, 5, 0, 5) 
+mainScroll.BackgroundTransparency = 1 
+mainScroll.ScrollBarThickness = 4 
+mainScroll.CanvasSize = UDim2.new(0, 0, 0, 160) 
 
-local mainListLayout = Instance.new("UIListLayout")
-mainListLayout.Parent = mainScroll
-mainListLayout.Padding = UDim.new(0, 5)
+local mainListLayout = Instance.new("UIListLayout") 
+mainListLayout.Parent = mainScroll 
+mainListLayout.Padding = UDim.new(0, 5) 
 
 -- Create Small Toggle Square (Mały kwadracik do przywracania GUI)
-local toggleSquare = Instance.new("TextButton")
-toggleSquare.Parent = screenGui
-toggleSquare.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-toggleSquare.Size = UDim2.new(0, 35, 0, 35)
-toggleSquare.Position = UDim2.new(0.1, 0, 0.1, 0) -- Początkowa pozycja na ekranie
-toggleSquare.Text = "🐾"
-toggleSquare.TextColor3 = Color3.fromRGB(255, 215, 0)
-toggleSquare.TextScaled = true
-toggleSquare.Visible = false
-toggleSquare.Active = true
-toggleSquare.Draggable = true -- Możesz go sobie przestawić w dowolne miejsce!
+local toggleSquare = Instance.new("TextButton") 
+toggleSquare.Parent = screenGui 
+toggleSquare.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
+toggleSquare.Size = UDim2.new(0, 35, 0, 35) 
+toggleSquare.Position = UDim2.new(0.1, 0, 0.1, 0) 
+toggleSquare.Text = "🐾" 
+toggleSquare.TextColor3 = Color3.fromRGB(255, 215, 0) 
+toggleSquare.TextScaled = true 
+toggleSquare.Visible = false 
+toggleSquare.Active = true 
+toggleSquare.Draggable = true 
 
 -- Create Emote Side Frame (Attached to the left of mainContainer) 
 local emoteFrame = Instance.new("Frame") 
@@ -86,8 +97,8 @@ local emoteData = {
     {Name = "Kicking Feet", ID = "103155280474275"}, 
     {Name = "Cat Pose", ID = "79458008243992"}, 
     {Name = "Feign Hurt", ID = "103426546772784"}, 
-    {Name = "Pies Szczeka", ID = "131027079503547"},
-    {Name = "Playing", ID = "86489858224707"}
+    {Name = "Pies Szczeka", ID = "131027079503547"}, 
+    {Name = "Playing", ID = "86489858224707"} 
 } 
 
 -- Create Scrolling List for Emotes 
@@ -103,11 +114,11 @@ local listLayout = Instance.new("UIListLayout")
 listLayout.Parent = scroll 
 listLayout.Padding = UDim.new(0, 5) 
 
--- Container for On/Off Buttons Row
-local rowContainer = Instance.new("Frame")
-rowContainer.Parent = mainScroll
-rowContainer.Size = UDim2.new(1, -5, 0, 25)
-rowContainer.BackgroundTransparency = 1
+-- Container for On/Off Buttons Row 
+local rowContainer = Instance.new("Frame") 
+rowContainer.Parent = mainScroll 
+rowContainer.Size = UDim2.new(1, -5, 0, 25) 
+rowContainer.BackgroundTransparency = 1 
 
 -- Create Buttons Inside Scroll 
 local onButton = Instance.new("TextButton") 
@@ -116,7 +127,7 @@ onButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 onButton.Size = UDim2.new(0.5, -2, 1, 0) 
 onButton.Position = UDim2.new(0, 0, 0, 0) 
 onButton.Text = "On" 
-onButton.TextColor3 = Color3.fromRGB(255, 215, 0) -- Złoty napis
+onButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
 onButton.TextScaled = true 
 
 local offButton = Instance.new("TextButton") 
@@ -125,7 +136,7 @@ offButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 offButton.Size = UDim2.new(0.5, -2, 1, 0) 
 offButton.Position = UDim2.new(0.5, 2, 0, 0) 
 offButton.Text = "Off" 
-offButton.TextColor3 = Color3.fromRGB(255, 215, 0) -- Złoty napis
+offButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
 offButton.TextScaled = true 
 
 local emoteToggleButton = Instance.new("TextButton") 
@@ -133,7 +144,7 @@ emoteToggleButton.Parent = mainScroll
 emoteToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
 emoteToggleButton.Size = UDim2.new(1, -5, 0, 25) 
 emoteToggleButton.Text = "Emotes" 
-emoteToggleButton.TextColor3 = Color3.fromRGB(255, 215, 0) -- Złoty napis
+emoteToggleButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
 emoteToggleButton.TextScaled = true 
 
 local destroyButton = Instance.new("TextButton") 
@@ -141,25 +152,25 @@ destroyButton.Parent = mainScroll
 destroyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
 destroyButton.Size = UDim2.new(1, -5, 0, 25) 
 destroyButton.Text = "Destroy" 
-destroyButton.TextColor3 = Color3.fromRGB(255, 215, 0) -- Złoty napis
+destroyButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
 destroyButton.TextScaled = true 
 
--- NOWY PRZYCISK HIDE (W menu głównym, zjedziesz do niego scrollem)
-local hideButton = Instance.new("TextButton")
-hideButton.Parent = mainScroll
-hideButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-hideButton.Size = UDim2.new(1, -5, 0, 25)
-hideButton.Text = "Hide"
-hideButton.TextColor3 = Color3.fromRGB(255, 215, 0)
-hideButton.TextScaled = true
+-- PRZYCISK HIDE
+local hideButton = Instance.new("TextButton") 
+hideButton.Parent = mainScroll 
+hideButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
+hideButton.Size = UDim2.new(1, -5, 0, 25) 
+hideButton.Text = "Hide" 
+hideButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
+hideButton.TextScaled = true 
 
 local statusLabel = Instance.new("TextLabel") 
 statusLabel.Parent = mainContainer 
-statusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Czarna ramka statusu
+statusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
 statusLabel.Size = UDim2.new(0, 200, 0, 30) 
 statusLabel.Position = UDim2.new(0, 0, 0, -30) 
 statusLabel.Text = "Status: Offline" 
-statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Neonowy pomarańczowy początkowy
+statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Neonowy pomarańczowy
 statusLabel.TextScaled = true 
 
 -- Global Variables 
@@ -179,10 +190,10 @@ local customWalkId = "84792004932424"
 local customIdle1Id = "120467296669059" 
 local customIdle2Id = "73644021399239" 
 
--- Trzy rezerwowe animacje ruchu
-local customJumpId = "0"   
-local customFallId = "0"   
-local customSwimId = "0"   
+-- Rezerwa na dodatkowe animacje ruchu
+local customJumpId = "0"    
+local customFallId = "0"    
+local customSwimId = "0"    
 
 -- Helper: Convert ID 
 local function getTrueAnimationId(id) 
@@ -234,7 +245,7 @@ local function startIdleSequence()
                 if idleTrack1 then idleTrack1:Stop(0.3) end 
                 if idleTrack2 then 
                     idleTrack2:Play(0.3) 
-                    local idle2Wait = (idleTrack2.Length > 0) and idleTrack2.Length or 5
+                    local idle2Wait = (idleTrack2.Length > 0) and idleTrack2.Length or 5 
                     task.wait(idle2Wait) 
                     if not isIdle or isManualEmotePlaying then break end 
                     idleTrack2:Stop(0.3) 
@@ -361,9 +372,9 @@ for _, data in ipairs(emoteData) do
     btn.Name = data.Name 
     btn.Parent = scroll 
     btn.Size = UDim2.new(1, -5, 0, 30) 
-    btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Czarny przycisk emotki
+    btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
     btn.Text = data.Name 
-    btn.TextColor3 = Color3.fromRGB(255, 215, 0) -- Złoty napis emotki
+    btn.TextColor3 = Color3.fromRGB(255, 215, 0) 
     btn.TextScaled = true 
     btn.MouseButton1Click:Connect(function() 
         local char = player.Character 
@@ -388,22 +399,22 @@ for _, data in ipairs(emoteData) do
     end) 
 end 
 
--- UI Toggles & Logic
+-- UI Toggles & Logic 
 emoteToggleButton.MouseButton1Click:Connect(function() emoteFrame.Visible = not emoteFrame.Visible end) 
 
 onButton.MouseButton1Click:Connect(function() 
     if not isCustomAnimActive then 
         isCustomAnimActive = true 
-        statusLabel.Text = "Status: Online"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) -- NOWY: Różowy Neon
+        statusLabel.Text = "Status: Online" 
+        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) -- Różowy Neon 
         if player.Character then applyCustomAnimation(player.Character) end 
     end 
 end) 
 
 offButton.MouseButton1Click:Connect(function() 
     if isCustomAnimActive then 
-        statusLabel.Text = "Status: Offline"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- NOWY: Pomarańczowy Neon
+        statusLabel.Text = "Status: Offline" 
+        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Pomarańczowy Neon 
         if player.Character then restoreOriginalAnimation(player.Character) end 
     end 
 end) 
@@ -413,16 +424,16 @@ destroyButton.MouseButton1Click:Connect(function()
     screenGui:Destroy() 
 end) 
 
--- LOGIKA HIDE / SHOW (Chowanie menu i przywracanie małym kwadracikiem)
-hideButton.MouseButton1Click:Connect(function()
-    mainContainer.Visible = false
-    toggleSquare.Visible = true
-end)
+-- LOGIKA HIDE / SHOW 
+hideButton.MouseButton1Click:Connect(function() 
+    mainContainer.Visible = false 
+    toggleSquare.Visible = true 
+end) 
 
-toggleSquare.MouseButton1Click:Connect(function()
-    toggleSquare.Visible = false
-    mainContainer.Visible = true
-end)
+toggleSquare.MouseButton1Click:Connect(function() 
+    toggleSquare.Visible = false 
+    mainContainer.Visible = true 
+end) 
 
 player.CharacterAdded:Connect(function(c) 
     if isCustomAnimActive then task.wait(0.5); applyCustomAnimation(c) end 
