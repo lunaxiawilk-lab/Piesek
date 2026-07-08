@@ -1,104 +1,492 @@
 
--- STRICT SERVER-SIDE TARGETER (Wersja 3.1 - Naprawiona Replikacja)
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Wait for player to load 
+local PlayerService = game:GetService("Players") 
+local RunService = game:GetService("RunService") 
+local player = PlayerService.LocalPlayer 
+if not player then player = PlayerService.PlayerAdded:Wait() end 
 
--- GUI SETUP
-local screenGui = Instance.new("ScreenGui", game:GetService("CoreGui") or LocalPlayer.PlayerGui)
-screenGui.Name = "PuppyTargetGui"
+-- Wait for player GUI to be ready 
+player:WaitForChild("PlayerGui") 
 
-local mainContainer = Instance.new("Frame", screenGui)
-mainContainer.Size = UDim2.new(0, 200, 0, 150)
-mainContainer.Position = UDim2.new(0.5, -100, 0.5, -75)
-mainContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-mainContainer.Active = true
-mainContainer.Draggable = true
-mainContainer.BorderSizePixel = 2
+-- Create ScreenGui 
+local screenGui = Instance.new("ScreenGui") 
+screenGui.ResetOnSpawn = false 
+screenGui.Name = "GuiVersion26_RobustTarget" 
 
-local nameInput = Instance.new("TextBox", mainContainer)
-nameInput.Size = UDim2.new(1, -10, 0, 30)
-nameInput.Position = UDim2.new(0, 5, 0, 10)
-nameInput.PlaceholderText = "Nick gracza..."
-nameInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-nameInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+-- PRIORYTETOWE WYŚWIETLANIE (Wymuszenie najwyższej warstwy i ominięcie marginesów)
+screenGui.DisplayOrder = 999999999 
+screenGui.IgnoreGuiInset = true    
 
-local onBtn = Instance.new("TextButton", mainContainer)
-onBtn.Size = UDim2.new(1, -10, 0, 35)
-onBtn.Position = UDim2.new(0, 5, 0, 50)
-onBtn.Text = "ON (Przejęcie)"
-onBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-onBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+-- SYSTEM WYBORU NAJBEZPIECZNIEJSZEJ WARSTWY (CoreGui -> PlayerGui)
+local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+if success and coreGui then
+    screenGui.Parent = coreGui
+else
+    screenGui.Parent = player.PlayerGui
+end
 
-local offBtn = Instance.new("TextButton", mainContainer)
-offBtn.Size = UDim2.new(1, -10, 0, 35)
-offBtn.Position = UDim2.new(0, 5, 0, 95)
-offBtn.Text = "OFF (Przywróć)"
-offBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-offBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+-- Create Main Drag Frame (The window container)
+local mainContainer = Instance.new("Frame") 
+mainContainer.Parent = screenGui 
+mainContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Czarna główna ramka
+mainContainer.Size = UDim2.new(0, 200, 0, 100) 
+mainContainer.Position = UDim2.new(0.3, 0, 0.5, -50) 
+mainContainer.Active = true 
+mainContainer.Draggable = true 
+mainContainer.BorderSizePixel = 2 
 
--- LOGIKA PRZEJĘCIA ANIMACJI
-local targetPlayer = nil
+-- Create Scrolling List for MAIN BUTTONS (Przewijanie menu głównego)
+local mainScroll = Instance.new("ScrollingFrame") 
+mainScroll.Parent = mainContainer 
+mainScroll.Size = UDim2.new(1, -10, 1, -10) 
+mainScroll.Position = UDim2.new(0, 5, 0, 5) 
+mainScroll.BackgroundTransparency = 1 
+mainScroll.ScrollBarThickness = 4 
+mainScroll.CanvasSize = UDim2.new(0, 0, 0, 200) -- Zwiększony rozmiar na nowe pole tekstowe
 
-local function getTrueId(id) return "rbxassetid://" .. tostring(id) end
+local mainListLayout = Instance.new("UIListLayout") 
+mainListLayout.Parent = mainScroll 
+mainListLayout.Padding = UDim.new(0, 5) 
 
-local function applyAnimations(char)
-    local hum = char:WaitForChild("Humanoid")
-    local animate = char:FindFirstChild("Animate")
+-- NOWA ZAKŁADKA / POLE TEKSTOWE NA NICK GRACZA (TextBox)
+local nameTextBox = Instance.new("TextBox")
+nameTextBox.Parent = mainScroll
+nameTextBox.Size = UDim2.new(1, -5, 0, 25)
+nameTextBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+nameTextBox.Text = ""
+nameTextBox.PlaceholderText = "Nick (puste / me = Ty)..."
+nameTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+nameTextBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+nameTextBox.TextScaled = true
+nameTextBox.BorderSizePixel = 1
+
+-- Create Small Toggle Square (Mały kwadracik do przywracania GUI)
+local toggleSquare = Instance.new("TextButton") 
+toggleSquare.Parent = screenGui 
+toggleSquare.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
+toggleSquare.Size = UDim2.new(0, 35, 0, 35) 
+toggleSquare.Position = UDim2.new(0.1, 0, 0.1, 0) 
+toggleSquare.Text = "🐾" 
+toggleSquare.TextColor3 = Color3.fromRGB(255, 215, 0) 
+toggleSquare.TextScaled = true 
+toggleSquare.Visible = false 
+toggleSquare.Active = true 
+toggleSquare.Draggable = true 
+
+-- Create Emote Side Frame (Attached to the left of mainContainer) 
+local emoteFrame = Instance.new("Frame") 
+emoteFrame.Parent = mainContainer 
+emoteFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Czarna ramka boczna emotek
+emoteFrame.Size = UDim2.new(0, 150, 0, 150) 
+emoteFrame.Position = UDim2.new(0, -155, 0, -30) 
+emoteFrame.Visible = false 
+emoteFrame.BorderSizePixel = 2 
+
+-- Emote List (27 Emotes) 
+local emoteData = { 
+    {Name = "Scratching", ID = "93910188107955"}, 
+    {Name = "Sit", ID = "129575609080331"}, 
+    {Name = "Lean Forward", ID = "123771165433588"}, 
+    {Name = "Playful", ID = "80706795731202"}, 
+    {Name = "Turn Away", ID = "107643451592152"}, 
+    {Name = "Hand Lick", ID = "86345507952689"}, 
+    {Name = "Leg Lick", ID = "85310727452727"}, 
+    {Name = "Stare", ID = "127703766312900"}, 
+    {Name = "Social-Roll", ID = "86604363197749"}, 
+    {Name = "Lay", ID = "119370572836578"}, 
+    {Name = "Lay Legs Up", ID = "91142240425542"}, 
+    {Name = "Lay Legs Up 2", ID = "123786470044230"}, 
+    {Name = "Back Up", ID = "108150470459728"}, 
+    {Name = "Pic Pose", ID = "72185261708093"}, 
+    {Name = "Sit-Dog", ID = "105298725756719"}, 
+    {Name = "Curious Sat Pose", ID = "76261461321661"}, 
+    {Name = "Nap", ID = "105016815489641"}, 
+    {Name = "Beg", ID = "129424042135317"}, 
+    {Name = "Shy", ID = "99425439298305"}, 
+    {Name = "Checking", ID = "73644021399239"}, 
+    {Name = "Contemplate", ID = "129641195700400"}, 
+    {Name = "Grooming", ID = "117809429848082"}, 
+    {Name = "Kicking Feet", ID = "103155280474275"}, 
+    {Name = "Cat Pose", ID = "79458008243992"}, 
+    {Name = "Feign Hurt", ID = "103426546772784"}, 
+    {Name = "Pies Szczeka", ID = "131027079503547"}, 
+    {Name = "Playing", ID = "86489858224707"} 
+} 
+
+-- Create Scrolling List for Emotes 
+local scroll = Instance.new("ScrollingFrame") 
+scroll.Parent = emoteFrame 
+scroll.Size = UDim2.new(1, -10, 1, -10) 
+scroll.Position = UDim2.new(0, 5, 0, 5) 
+scroll.BackgroundTransparency = 1 
+scroll.ScrollBarThickness = 4 
+scroll.CanvasSize = UDim2.new(0, 0, 0, #emoteData * 35) 
+
+local listLayout = Instance.new("UIListLayout") 
+listLayout.Parent = scroll 
+listLayout.Padding = UDim.new(0, 5) 
+
+-- Container for On/Off Buttons Row 
+local rowContainer = Instance.new("Frame") 
+rowContainer.Parent = mainScroll 
+rowContainer.Size = UDim2.new(1, -5, 0, 25) 
+rowContainer.BackgroundTransparency = 1 
+
+-- Create Buttons Inside Scroll 
+local onButton = Instance.new("TextButton") 
+onButton.Parent = rowContainer 
+onButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
+onButton.Size = UDim2.new(0.5, -2, 1, 0) 
+onButton.Position = UDim2.new(0, 0, 0, 0) 
+onButton.Text = "On" 
+onButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
+onButton.TextScaled = true 
+
+local offButton = Instance.new("TextButton") 
+offButton.Parent = rowContainer 
+offButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
+offButton.Size = UDim2.new(0.5, -2, 1, 0) 
+offButton.Position = UDim2.new(0.5, 2, 0, 0) 
+offButton.Text = "Off" 
+offButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
+offButton.TextScaled = true 
+
+local emoteToggleButton = Instance.new("TextButton") 
+emoteToggleButton.Parent = mainScroll 
+emoteToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
+emoteToggleButton.Size = UDim2.new(1, -5, 0, 25) 
+emoteToggleButton.Text = "Emotes" 
+emoteToggleButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
+emoteToggleButton.TextScaled = true 
+
+local destroyButton = Instance.new("TextButton") 
+destroyButton.Parent = mainScroll 
+destroyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
+destroyButton.Size = UDim2.new(1, -5, 0, 25) 
+destroyButton.Text = "Destroy" 
+destroyButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
+destroyButton.TextScaled = true 
+
+-- PRZYCISK HIDE 
+local hideButton = Instance.new("TextButton") 
+hideButton.Parent = mainScroll 
+hideButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
+hideButton.Size = UDim2.new(1, -5, 0, 25) 
+hideButton.Text = "Hide" 
+hideButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
+hideButton.TextScaled = true 
+
+-- RAMKA STATUSU
+local statusLabel = Instance.new("TextLabel") 
+statusLabel.Parent = mainContainer 
+statusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
+statusLabel.Size = UDim2.new(0, 200, 0, 30) 
+statusLabel.Position = UDim2.new(0, 0, 0, -30) 
+statusLabel.Text = "Status: Offline" 
+statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) 
+statusLabel.TextScaled = true 
+
+-- ZŁOTY NAGŁÓWEK "Puppy Boy Gui"
+local headerLabel = Instance.new("TextLabel") 
+headerLabel.Parent = mainContainer 
+headerLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
+headerLabel.Size = UDim2.new(0, 200, 0, 30) 
+headerLabel.Position = UDim2.new(0, 0, 0, -62) 
+headerLabel.Text = "Puppy Boy Gui" 
+headerLabel.TextColor3 = Color3.fromRGB(255, 215, 0) 
+headerLabel.TextScaled = true 
+headerLabel.Font = Enum.Font.SourceSansBold 
+
+-- Global Variables 
+local isCustomAnimActive = false 
+local charConnections = {} 
+local idleSequenceTask = nil 
+local isIdle = false 
+local isManualEmotePlaying = false 
+local currentMovementState = "Stopped" 
+local originalC0s = {} 
+local customRunTrack, customWalkTrack 
+local idleTrack1, idleTrack2 
+local loadedManualEmotes = {} 
+local targetPlayer = player -- Zmienna przechowująca aktualny cel (Domyślnie Ty)
+local targetCharConnection = nil
+
+local customRunId = "108985707207747" 
+local customWalkId = "84792004932424" 
+local customIdle1Id = "120467296669059" 
+local customIdle2Id = "73644021399239" 
+
+-- Rezerwa na dodatkowe animacje ruchu
+local customJumpId = "0"    
+local customFallId = "0"    
+local customSwimId = "0"    
+
+-- NOWA, ODPORNA NA BLOKADY FUNKCJA ŁADOWANIA ID (Pancerny Loader)
+local function getTrueAnimationId(id) 
+    local strId = tostring(id):gsub("rbxassetid://", "") 
+    local formattedId = "rbxassetid://" .. strId 
     
-    -- Jeśli skrypt animacji istnieje, podmieniamy w nim wartości StringValue
-    if animate then
-        -- Tablica z Twoimi animacjami pieska
-        local anims = {
-            run = getTrueId("108985707207747"),
-            walk = getTrueId("84792004932424"),
-            idle = getTrueId("120467296669059") -- Główne Idle spoczynkowe
-        }
-        
-        -- Nadpisujemy ID wewnątrz folderów domyślnego skryptu Roblox
-        for animName, id in pairs(anims) do
-            local folder = animate:FindFirstChild(animName)
-            if folder then
-                -- Szukamy obiektów typu Animation wewnątrz folderu (np. WalkAnim, RunAnim)
-                for _, child in pairs(folder:GetChildren()) do
-                    if child:IsA("Animation") then
-                        child.AnimationId = id
-                    end
-                end
-            end
+    local success, assets = pcall(function() 
+        return game:GetObjects(formattedId) 
+    end) 
+    
+    if success and assets and #assets > 0 then 
+        for _, asset in ipairs(assets) do 
+            if asset:IsA("Animation") then return asset.AnimationId end 
+            local anim = asset:FindFirstChildWhichIsA("Animation", true) 
+            if anim then return anim.AnimationId end 
+        end 
+    end 
+    
+    return formattedId 
+end 
+
+-- Wyszukiwarka graczy na serwerze (Wsparcie dla częściowych nazw)
+local function findTargetPlayer(text)
+    if text == "" or text:lower() == "me" then return player end
+    for _, p in ipairs(PlayerService:GetPlayers()) do
+        if p.Name:lower():sub(1, #text) == text:lower() or p.DisplayName:lower():sub(1, #text) == text:lower() then
+            return p
         end
+    end
+    return player
+end
+
+-- Helper: Check Special States 
+local function isSpecialMovementState(state) 
+    return state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Climbing or state == Enum.HumanoidStateType.Swimming or state == Enum.HumanoidStateType.Seated or state == Enum.HumanoidStateType.GettingUp or state == Enum.HumanoidStateType.FallingDown or state == Enum.HumanoidStateType.Ragdoll or state == Enum.HumanoidStateType.Flying or state == Enum.HumanoidStateType.Physics or state == Enum.HumanoidStateType.Dead 
+end 
+
+-- Stop everything 
+local function stopAllManualTracks() 
+    isManualEmotePlaying = false 
+    isIdle = false 
+    if idleSequenceTask then task.cancel(idleSequenceTask); idleSequenceTask = nil end 
+    if idleTrack1 then idleTrack1:Stop(0.2) end 
+    if idleTrack2 then idleTrack2:Stop(0.2) end 
+    for _, track in pairs(loadedManualEmotes) do track:Stop(0.2) end 
+end 
+
+-- Idle Sequence Logic 
+local function startIdleSequence() 
+    if isIdle or not isCustomAnimActive or isManualEmotePlaying then return end 
+    local char = targetPlayer.Character -- Dynamicznie sprawdza postać celu
+    if char and char:FindFirstChild("Humanoid") then 
+        local state = char.Humanoid:GetState() 
+        if isSpecialMovementState(state) then return end 
+    end 
+    isIdle = true 
+    if idleSequenceTask then task.cancel(idleSequenceTask) end 
+    idleSequenceTask = task.spawn(function() 
+        while isIdle and isCustomAnimActive do 
+            if isManualEmotePlaying then task.wait(0.5) continue end 
+            if idleTrack1 and not idleTrack1.IsPlaying then idleTrack1:Play(0.3) end 
+            local waitTime = (idleTrack1 and idleTrack1.Length > 0) and idleTrack1.Length or 5 
+            task.wait(waitTime) 
+            if not isIdle or isManualEmotePlaying then break end 
+            if math.random(1, 100) <= 20 then 
+                if idleTrack1 then idleTrack1:Stop(0.3) end 
+                if idleTrack2 then 
+                    idleTrack2:Play(0.3) 
+                    local idle2Wait = (idleTrack2.Length > 0) and idleTrack2.Length or 5 
+                    task.wait(idle2Wait) 
+                    if not isIdle or isManualEmotePlaying then break end 
+                    idleTrack2:Stop(0.3) 
+                end 
+            end 
+        end 
+    end) 
+end 
+
+-- Apply Animations to Target Character
+local function applyCustomAnimation(character) 
+    local humanoid = character:WaitForChild("Humanoid", 5) 
+    local animator = humanoid:WaitForChild("Animator", 5) 
+    if not animator then return end 
+
+    for _, conn in pairs(charConnections) do conn:Disconnect() end 
+    charConnections = {} 
+    currentMovementState = "Stopped" 
+
+    originalC0s = {} 
+    for _, desc in ipairs(character:GetDescendants()) do 
+        if desc:IsA("Motor6D") then originalC0s[desc] = desc.C0 end 
+    end 
+
+    local rAnim = Instance.new("Animation"); rAnim.AnimationId = getTrueAnimationId(customRunId) 
+    customRunTrack = animator:LoadAnimation(rAnim); customRunTrack.Priority = Enum.AnimationPriority.Action3 
+    
+    local wAnim = Instance.new("Animation"); wAnim.AnimationId = getTrueAnimationId(customWalkId) 
+    customWalkTrack = animator:LoadAnimation(wAnim); customWalkTrack.Priority = Enum.AnimationPriority.Action3 
+
+    local a1 = Instance.new("Animation"); a1.AnimationId = getTrueAnimationId(customIdle1Id) 
+    idleTrack1 = animator:LoadAnimation(a1); idleTrack1.Priority = Enum.AnimationPriority.Action2 
+    
+    local a2 = Instance.new("Animation"); a2.AnimationId = getTrueAnimationId(customIdle2Id) 
+    idleTrack2 = animator:LoadAnimation(a2); idleTrack2.Priority = Enum.AnimationPriority.Action2 
+
+    loadedManualEmotes = {} 
+    for _, data in ipairs(emoteData) do 
+        local anim = Instance.new("Animation") 
+        anim.AnimationId = getTrueAnimationId(data.ID) 
+        local track = animator:LoadAnimation(anim) 
+        track.Priority = Enum.AnimationPriority.Action4 
+        loadedManualEmotes[data.Name] = track 
+    end 
+
+    table.insert(charConnections, RunService.Heartbeat:Connect(function() 
+        if not isCustomAnimActive then return end 
+        local state = humanoid:GetState() 
+        local isSpecialState = isSpecialMovementState(state) 
+
+        if not isSpecialState then 
+            for motor, c0 in pairs(originalC0s) do 
+                if motor.Parent and (motor.Name:match("Shoulder") or motor.Name == "Waist" or motor.Name == "Neck") then 
+                    motor.C0 = c0 
+                end 
+            end 
+        end 
+
+        if isSpecialState then 
+            if currentMovementState ~= "Special" then 
+                currentMovementState = "Special" 
+                if customWalkTrack then customWalkTrack:Stop(0.2) end 
+                if customRunTrack then customRunTrack:Stop(0.2) end 
+                stopAllManualTracks() 
+            end 
+            return 
+        end 
+
+        local isMoving = humanoid.MoveDirection.Magnitude > 0.05 
+        if isMoving then 
+            local velocity = humanoid.RootPart and humanoid.RootPart.Velocity or Vector3.new(0,0,0) 
+            local flatSpeed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude 
+            local animSpeed = math.max(flatSpeed, 2) 
+
+            local directionMultiplier = 1 
+            if humanoid.RootPart then 
+                local moveDir = humanoid.MoveDirection 
+                local lookDir = humanoid.RootPart.CFrame.LookVector 
+                if moveDir:Dot(lookDir) < -0.1 then directionMultiplier = -1 end 
+            end 
+
+            if flatSpeed <= 10 then 
+                if currentMovementState ~= "Walking" then 
+                    currentMovementState = "Walking" 
+                    stopAllManualTracks() 
+                    if customRunTrack then customRunTrack:Stop(0.2) end 
+                    if customWalkTrack then customWalkTrack:Play(0.2) end 
+                end 
+                if customWalkTrack then customWalkTrack:AdjustSpeed((animSpeed / 10) * directionMultiplier) end 
+            else 
+                if currentMovementState ~= "Running" then 
+                    currentMovementState = "Running" 
+                    stopAllManualTracks() 
+                    if customWalkTrack then customWalkTrack:Stop(0.2) end 
+                    if customRunTrack then customRunTrack:Play(0.2) end 
+                end 
+                if customRunTrack then customRunTrack:AdjustSpeed((animSpeed / 16) * directionMultiplier) end 
+            end 
+        else 
+            if currentMovementState ~= "Stopped" then 
+                currentMovementState = "Stopped" 
+                if customWalkTrack then customWalkTrack:Stop(0.2) end 
+                if customRunTrack then customRunTrack:Stop(0.2) end 
+            end 
+            if not isManualEmotePlaying then startIdleSequence() end 
+        end 
+    end)) 
+end 
+
+-- Restore Original Animations 
+local function restoreOriginalAnimation(character) 
+    isCustomAnimActive = false 
+    for _, conn in pairs(charConnections) do conn:Disconnect() end 
+    charConnections = {} 
+    originalC0s = {} 
+    if customWalkTrack then customWalkTrack:Stop(0.2) end 
+    if customRunTrack then customRunTrack:Stop(0.2) end 
+    stopAllManualTracks() 
+end 
+
+-- Create Emote Buttons in Scroll 
+for _, data in ipairs(emoteData) do 
+    local btn = Instance.new("TextButton") 
+    btn.Name = data.Name 
+    btn.Parent = scroll 
+    btn.Size = UDim2.new(1, -5, 0, 30) 
+    btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
+    btn.Text = data.Name 
+    btn.TextColor3 = Color3.fromRGB(255, 215, 0) 
+    btn.TextScaled = true 
+    btn.MouseButton1Click:Connect(function() 
+        local char = targetPlayer.Character -- Wywołuje emotkę na aktualnym celu
+        if not char or not isCustomAnimActive then return end 
+        local hum = char:FindFirstChild("Humanoid") 
+        if hum then 
+            local state = hum:GetState() 
+            if hum.MoveDirection.Magnitude < 0.1 and not isSpecialMovementState(state) then 
+                stopAllManualTracks() 
+                isManualEmotePlaying = true 
+                local track = loadedManualEmotes[data.Name] 
+                if track then 
+                    track:Play(0.3) 
+                    local conn; conn = track.Stopped:Connect(function() 
+                        isManualEmotePlaying = false 
+                        if hum.MoveDirection.Magnitude < 0.1 then startIdleSequence() end 
+                        conn:Disconnect() 
+                    end) 
+                end 
+            end 
+        end 
+    end) 
+end 
+
+-- UI Toggles & Logic 
+emoteToggleButton.MouseButton1Click:Connect(function() emoteFrame.Visible = not emoteFrame.Visible end) 
+
+onButton.MouseButton1Click:Connect(function() 
+    if not isCustomAnimActive then 
+        -- Ustala dynamiczny cel na podstawie wpisanego tekstu
+        targetPlayer = findTargetPlayer(nameTextBox.Text)
         
-        -- WYMUSZENIE ODŚWIEŻENIA STANU (Żeby gra natychmiast załadowała nowe ID)
-        -- Przemieszczamy na chwilę postać lub zmieniamy jej stan, by zresetować skrypt Animate
-        hum:ChangeState(Enum.HumanoidStateType.Landed)
-        task.wait(0.1)
-        hum:ChangeState(Enum.HumanoidStateType.Running)
-    end
-end
+        isCustomAnimActive = true 
+        statusLabel.Text = "Target: " .. targetPlayer.Name 
+        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) -- Różowy neon
+        
+        if targetPlayer.Character then applyCustomAnimation(targetPlayer.Character) end 
+        
+        -- Obsługuje respawn aktualnego celu
+        if targetCharConnection then targetCharConnection:Disconnect() end
+        targetCharConnection = targetPlayer.CharacterAdded:Connect(function(c)
+            if isCustomAnimActive then task.wait(0.5); applyCustomAnimation(c) end
+        end)
+    end 
+end) 
 
-local function findTarget(name)
-    if name == "" or name == " " then return nil end
-    for _, p in pairs(Players:GetPlayers()) do
-        if p.Name:lower():sub(1, #name) == name:lower() then return p end
-    end
-    return nil
-end
+offButton.MouseButton1Click:Connect(function() 
+    if isCustomAnimActive then 
+        statusLabel.Text = "Status: Offline" 
+        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Pomarańczowy neon
+        if targetCharConnection then targetCharConnection:Disconnect(); targetCharConnection = nil end
+        if targetPlayer.Character then restoreOriginalAnimation(targetPlayer.Character) end 
+    end 
+end) 
 
-onBtn.MouseButton1Click:Connect(function()
-    local p = findTarget(nameInput.Text)
-    if p and p.Character then
-        targetPlayer = p
-        applyAnimations(p.Character)
-        print("Pomyślnie podmieniono animacje spoczynku i ruchu u: " .. p.Name)
-    else
-        print("Nie wpisano nicku lub nie znaleziono gracza! Przycisk zablokowany.")
-    end
-end)
+destroyButton.MouseButton1Click:Connect(function() 
+    if targetCharConnection then targetCharConnection:Disconnect() end
+    if isCustomAnimActive and targetPlayer.Character then restoreOriginalAnimation(targetPlayer.Character) end 
+    screenGui:Destroy() 
+end) 
 
-offBtn.MouseButton1Click:Connect(function()
-    if targetPlayer and targetPlayer.Character then
-        -- Najprostsza metoda na przywrócenie oryginalnych animacji serwerowo bez kombinowania: ubicie postaci
-        targetPlayer.Character:BreakJoints() 
-        targetPlayer = nil
-    end
-end)
+-- LOGIKA HIDE / SHOW 
+hideButton.MouseButton1Click:Connect(function() 
+    mainContainer.Visible = false 
+    toggleSquare.Visible = true 
+end) 
+
+toggleSquare.MouseButton1Click:Connect(function() 
+    toggleSquare.Visible = false 
+    mainContainer.Visible = true 
+end) 
 
