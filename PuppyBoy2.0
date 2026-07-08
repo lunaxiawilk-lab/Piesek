@@ -11,7 +11,7 @@ player:WaitForChild("PlayerGui")
 -- Create ScreenGui 
 local screenGui = Instance.new("ScreenGui") 
 screenGui.ResetOnSpawn = false 
-screenGui.Name = "GuiVersion23_Priority" 
+screenGui.Name = "GuiVersion24_R15Forced" 
 
 -- PRIORYTETOWE WYŚWIETLANIE (Wymuszenie najwyższej warstwy i ominięcie marginesów)
 screenGui.DisplayOrder = 999999999 
@@ -155,7 +155,7 @@ destroyButton.Text = "Destroy"
 destroyButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
 destroyButton.TextScaled = true 
 
--- PRZYCISK HIDE
+-- PRZYCISK HIDE 
 local hideButton = Instance.new("TextButton") 
 hideButton.Parent = mainScroll 
 hideButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40) 
@@ -170,7 +170,7 @@ statusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 statusLabel.Size = UDim2.new(0, 200, 0, 30) 
 statusLabel.Position = UDim2.new(0, 0, 0, -30) 
 statusLabel.Text = "Status: Offline" 
-statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Neonowy pomarańczowy
+statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Pomarańczowy Neon 
 statusLabel.TextScaled = true 
 
 -- Global Variables 
@@ -190,10 +190,51 @@ local customWalkId = "84792004932424"
 local customIdle1Id = "120467296669059" 
 local customIdle2Id = "73644021399239" 
 
--- Rezerwa na dodatkowe animacje ruchu
+-- Rezerwa na dodatkowe animacje ruchu 
 local customJumpId = "0"    
 local customFallId = "0"    
 local customSwimId = "0"    
+
+-- NADRZĘDNA FUNKCJA: Wymuszanie struktury R15 na Humanoidzie (Lokalny fallback dla gier R6)
+local function forceR15Structure(character)
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if not humanoid then return end
+    
+    -- Jeśli silnik już działa w trybie R15, nie ma potrzeby modyfikacji stawów
+    if humanoid.RigType == Enum.HumanoidRigType.R15 then return end
+    
+    -- Oszukanie właściwości RigType po stronie klienta
+    pcall(function()
+        humanoid.RigType = Enum.HumanoidRigType.R15
+    end)
+    
+    -- Budowanie sztucznych, wymaganych punktów montażowych dla zaawansowanego Riga
+    local requiredJoints = {"UpperTorso", "LowerTorso", "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "RightUpperLeg", "RightLowerLeg", "RightFoot", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand"}
+    local root = character:FindFirstChild("HumanoidRootPart")
+    
+    if root then
+        for _, jointName in ipairs(requiredJoints) do
+            if not character:FindFirstChild(jointName) then
+                local fakePart = Instance.new("Part")
+                fakePart.Name = jointName
+                fakePart.Size = Vector3.new(0.1, 0.1, 0.1)
+                fakePart.Transparency = 1
+                fakePart.CanCollide = false
+                fakePart.Parent = character
+                
+                local motor = Instance.new("Motor6D")
+                motor.Name = jointName .. "Joint"
+                motor.Part0 = root
+                motor.Part1 = fakePart
+                motor.Parent = root
+            end
+        end
+    end
+    
+    -- Wyłączenie gryzących się, fabrycznych skryptów animacji R6
+    local oldAnimate = character:FindFirstChild("Animate")
+    if oldAnimate then oldAnimate.Disabled = true end
+end
 
 -- Helper: Convert ID 
 local function getTrueAnimationId(id) 
@@ -257,6 +298,9 @@ end
 
 -- Apply Animations 
 local function applyCustomAnimation(character) 
+    -- WYMUSZENIE REKONSTRUKCJI R15 PRZED URUCHOMIENIEM ANIMACJI
+    forceR15Structure(character)
+
     local humanoid = character:WaitForChild("Humanoid", 5) 
     local animator = humanoid:WaitForChild("Animator", 5) 
     if not animator then return end 
@@ -364,6 +408,10 @@ local function restoreOriginalAnimation(character)
     if customWalkTrack then customWalkTrack:Stop(0.2) end 
     if customRunTrack then customRunTrack:Stop(0.2) end 
     stopAllManualTracks() 
+    
+    -- Przywrócenie skryptu gry przy wyłączeniu
+    local oldAnimate = character:FindFirstChild("Animate")
+    if oldAnimate then oldAnimate.Disabled = false end
 end 
 
 -- Create Emote Buttons in Scroll 
@@ -436,6 +484,9 @@ toggleSquare.MouseButton1Click:Connect(function()
 end) 
 
 player.CharacterAdded:Connect(function(c) 
-    if isCustomAnimActive then task.wait(0.5); applyCustomAnimation(c) end 
+    if isCustomAnimActive then 
+        task.wait(0.5)
+        applyCustomAnimation(c) 
+    end 
 end)
 
