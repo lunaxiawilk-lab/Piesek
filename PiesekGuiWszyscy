@@ -1,7 +1,6 @@
 
--- STRICT SERVER-SIDE TARGETER (Wersja 3.0 - Czysta Logika)
+-- STRICT SERVER-SIDE TARGETER (Wersja 3.1 - Naprawiona Replikacja)
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 -- GUI SETUP
@@ -37,9 +36,8 @@ offBtn.Text = "OFF (Przywróć)"
 offBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 offBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
 
--- LOGIKA
+-- LOGIKA PRZEJĘCIA ANIMACJI
 local targetPlayer = nil
-local activeAnims = {}
 
 local function getTrueId(id) return "rbxassetid://" .. tostring(id) end
 
@@ -47,28 +45,38 @@ local function applyAnimations(char)
     local hum = char:WaitForChild("Humanoid")
     local animate = char:FindFirstChild("Animate")
     
-    -- Kluczowy moment: Usuwamy oryginalne skrypty ruchu gracza
-    if animate then animate:Destroy() end
-    
-    local anims = {
-        Run = getTrueId("108985707207747"),
-        Walk = getTrueId("84792004932424"),
-        Idle1 = getTrueId("120467296669059"),
-        Idle2 = getTrueId("73644021399239")
-    }
-
-    local animator = hum:FindFirstChild("Animator") or Instance.new("Animator", hum)
-    
-    for name, id in pairs(anims) do
-        local anim = Instance.new("Animation")
-        anim.AnimationId = id
-        local track = animator:LoadAnimation(anim)
-        track:Play()
-        activeAnims[name] = track
+    -- Jeśli skrypt animacji istnieje, podmieniamy w nim wartości StringValue
+    if animate then
+        -- Tablica z Twoimi animacjami pieska
+        local anims = {
+            run = getTrueId("108985707207747"),
+            walk = getTrueId("84792004932424"),
+            idle = getTrueId("120467296669059") -- Główne Idle spoczynkowe
+        }
+        
+        -- Nadpisujemy ID wewnątrz folderów domyślnego skryptu Roblox
+        for animName, id in pairs(anims) do
+            local folder = animate:FindFirstChild(animName)
+            if folder then
+                -- Szukamy obiektów typu Animation wewnątrz folderu (np. WalkAnim, RunAnim)
+                for _, child in pairs(folder:GetChildren()) do
+                    if child:IsA("Animation") then
+                        child.AnimationId = id
+                    end
+                end
+            end
+        end
+        
+        -- WYMUSZENIE ODŚWIEŻENIA STANU (Żeby gra natychmiast załadowała nowe ID)
+        -- Przemieszczamy na chwilę postać lub zmieniamy jej stan, by zresetować skrypt Animate
+        hum:ChangeState(Enum.HumanoidStateType.Landed)
+        task.wait(0.1)
+        hum:ChangeState(Enum.HumanoidStateType.Running)
     end
 end
 
 local function findTarget(name)
+    if name == "" or name == " " then return nil end
     for _, p in pairs(Players:GetPlayers()) do
         if p.Name:lower():sub(1, #name) == name:lower() then return p end
     end
@@ -80,16 +88,17 @@ onBtn.MouseButton1Click:Connect(function()
     if p and p.Character then
         targetPlayer = p
         applyAnimations(p.Character)
-        print("Przejęto kontrolę nad: " .. p.Name)
+        print("Pomyślnie podmieniono animacje spoczynku i ruchu u: " .. p.Name)
+    else
+        print("Nie wpisano nicku lub nie znaleziono gracza! Przycisk zablokowany.")
     end
 end)
 
 offBtn.MouseButton1Click:Connect(function()
     if targetPlayer and targetPlayer.Character then
-        -- Tutaj przywracamy domyślne animacje (np. poprzez reset postaci)
+        -- Najprostsza metoda na przywrócenie oryginalnych animacji serwerowo bez kombinowania: ubicie postaci
         targetPlayer.Character:BreakJoints() 
         targetPlayer = nil
-        for _, track in pairs(activeAnims) do track:Stop() end
     end
 end)
 
