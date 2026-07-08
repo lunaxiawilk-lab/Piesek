@@ -1,87 +1,79 @@
 
--- Bring Player GUI - Profesjonalna wersja
-local PlayerService = game:GetService("Players")
-local player = PlayerService.LocalPlayer
+-- Bring Player GUI - Wersja 2026 (Naprawiona i Zoptymalizowana)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local lp = Players.LocalPlayer
 
--- Create ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "BringPlayerGui"
-screenGui.DisplayOrder = 999999
-screenGui.Parent = game:GetService("CoreGui") or player.PlayerGui
+-- Tworzenie GUI w Twoim stylu (Czerń i Złoto)
+local screenGui = Instance.new("ScreenGui", CoreGui)
+screenGui.Name = "BringPlayerGUI"
 
--- Główna Ramka
-local mainContainer = Instance.new("Frame")
-mainContainer.Parent = screenGui
-mainContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-mainContainer.Size = UDim2.new(0, 200, 0, 150)
-mainContainer.Position = UDim2.new(0.5, -100, 0.5, -75)
-mainContainer.Active = true
-mainContainer.Draggable = true
-mainContainer.BorderSizePixel = 2
-mainContainer.BorderColor3 = Color3.fromRGB(255, 215, 0)
+local main = Instance.new("Frame", screenGui)
+main.Size = UDim2.new(0, 220, 0, 160)
+main.Position = UDim2.new(0.5, -110, 0.5, -80)
+main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+main.BorderSizePixel = 2
+main.BorderColor3 = Color3.fromRGB(255, 215, 0)
+main.Active = true
+main.Draggable = true
 
--- Tytuł
-local header = Instance.new("TextLabel")
-header.Parent = mainContainer
-header.Size = UDim2.new(1, 0, 0, 30)
-header.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-header.Text = "Bring Player GUI"
-header.TextColor3 = Color3.fromRGB(255, 215, 0)
-header.Font = Enum.Font.SourceSansBold
-header.TextScaled = true
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "BRING PLAYER"
+title.TextColor3 = Color3.fromRGB(255, 215, 0)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 18
+title.BackgroundTransparency = 1
 
--- Pole tekstowe na nick
-local nameTextBox = Instance.new("TextBox")
-nameTextBox.Parent = mainContainer
-nameTextBox.Size = UDim2.new(0.9, 0, 0, 30)
-nameTextBox.Position = UDim2.new(0.05, 0, 0.3, 0)
-nameTextBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-nameTextBox.PlaceholderText = "Wpisz nick gracza..."
-nameTextBox.Text = ""
-nameTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-nameTextBox.TextScaled = true
+local textBox = Instance.new("TextBox", main)
+textBox.Size = UDim2.new(0.9, 0, 0, 40)
+textBox.Position = UDim2.new(0.05, 0, 0.3, 0)
+textBox.PlaceholderText = "Wpisz nick..."
+textBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textBox.BorderSizePixel = 1
+textBox.BorderColor3 = Color3.fromRGB(255, 215, 0)
 
--- Przycisk Bring
-local bringButton = Instance.new("TextButton")
-bringButton.Parent = mainContainer
-bringButton.Size = UDim2.new(0.9, 0, 0, 40)
-bringButton.Position = UDim2.new(0.05, 0, 0.6, 0)
-bringButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-bringButton.Text = "BRING PLAYER"
-bringButton.TextColor3 = Color3.fromRGB(255, 215, 0)
-bringButton.TextScaled = true
+local bringBtn = Instance.new("TextButton", main)
+bringBtn.Size = UDim2.new(0.9, 0, 0, 40)
+bringBtn.Position = UDim2.new(0.05, 0, 0.65, 0)
+bringBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+bringBtn.Text = "ZASSAJ GRACZA"
+bringBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+bringBtn.Font = Enum.Font.SourceSansBold
 
--- Funkcja przyciągania
-local function bringPlayer(targetName)
-    local target = nil
-    for _, p in pairs(PlayerService:GetPlayers()) do
-        if p.Name:lower():sub(1, #targetName) == targetName:lower() then
-            target = p
-            break
-        end
+-- Logika Bring
+local function getPlayer(name)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.Name:lower():sub(1, #name) == name:lower() then return p end
     end
-
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local myChar = player.Character
-        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-            local myHRP = myChar.HumanoidRootPart
-            local targetHRP = target.Character.HumanoidRootPart
-            local originalPos = myHRP.CFrame
-
-            -- Proces Bring
-            myChar.Humanoid.PlatformStand = true
-            for i = 1, 10 do
-                myHRP.CFrame = targetHRP.CFrame
-                myHRP.Velocity = Vector3.new(9999, 9999, 9999)
-                task.wait(0.05)
-            end
-            myHRP.CFrame = originalPos
-            myChar.Humanoid.PlatformStand = false
-        end
-    end
+    return nil
 end
 
-bringButton.MouseButton1Click:Connect(function()
-    bringPlayer(nameTextBox.Text)
+bringBtn.MouseButton1Click:Connect(function()
+    local target = getPlayer(textBox.Text)
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local myHRP = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+        local targetHRP = target.Character.HumanoidRootPart
+        
+        if myHRP then
+            -- Naprawa: Wymuszamy fizykę, która przyciąga gracza
+            target.Character.Humanoid.PlatformStand = true
+            
+            local connection
+            connection = RunService.RenderStepped:Connect(function()
+                if target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                    targetHRP.AssemblyLinearVelocity = (myHRP.Position - targetHRP.Position) * 10
+                else
+                    connection:Disconnect()
+                end
+            end)
+            
+            task.wait(1.5) -- Czas przyciągania
+            connection:Disconnect()
+            target.Character.Humanoid.PlatformStand = false
+        end
+    end
 end)
 
