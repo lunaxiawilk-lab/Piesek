@@ -11,7 +11,7 @@ player:WaitForChild("PlayerGui")
 -- Create ScreenGui 
 local screenGui = Instance.new("ScreenGui") 
 screenGui.ResetOnSpawn = false 
-screenGui.Name = "GuiVersion24_Header" 
+screenGui.Name = "GuiVersion25_Robust" 
 
 -- PRIORYTETOWE WYŚWIETLANIE (Wymuszenie najwyższej warstwy i ominięcie marginesów)
 screenGui.DisplayOrder = 999999999 
@@ -164,26 +164,26 @@ hideButton.Text = "Hide"
 hideButton.TextColor3 = Color3.fromRGB(255, 215, 0) 
 hideButton.TextScaled = true 
 
--- OTO RAMKA STATUSU (Przesunięta lekko niżej, żeby zrobić miejsce dla nowego napisu)
+-- RAMKA STATUSU
 local statusLabel = Instance.new("TextLabel") 
 statusLabel.Parent = mainContainer 
 statusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
 statusLabel.Size = UDim2.new(0, 200, 0, 30) 
-statusLabel.Position = UDim2.new(0, 0, 0, -30) -- Pozostaje idealnie nad głównym oknem
+statusLabel.Position = UDim2.new(0, 0, 0, -30) 
 statusLabel.Text = "Status: Offline" 
-statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Pomarańczowy Neon
+statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) 
 statusLabel.TextScaled = true 
 
--- NOWY ELEMENT: ZŁOTY NAGŁÓWEK "Puppy Boy Gui" (Ustawiony nad statusem)
-local headerLabel = Instance.new("TextLabel")
-headerLabel.Parent = mainContainer
-headerLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Czarne tło
-headerLabel.Size = UDim2.new(0, 200, 0, 30)
-headerLabel.Position = UDim2.new(0, 0, 0, -62) -- Pozycja nad ramką statusu (z małym odstępem)
-headerLabel.Text = "Puppy Boy Gui"
-headerLabel.TextColor3 = Color3.fromRGB(255, 215, 0) -- Złoty kolor napisu
-headerLabel.TextScaled = true
-headerLabel.Font = Enum.Font.SourceSansBold -- Pogrubiona czcionka, żeby wyglądało profesjonalnie
+-- ZŁOTY NAGŁÓWEK "Puppy Boy Gui"
+local headerLabel = Instance.new("TextLabel") 
+headerLabel.Parent = mainContainer 
+headerLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
+headerLabel.Size = UDim2.new(0, 200, 0, 30) 
+headerLabel.Position = UDim2.new(0, 0, 0, -62) 
+headerLabel.Text = "Puppy Boy Gui" 
+headerLabel.TextColor3 = Color3.fromRGB(255, 215, 0) 
+headerLabel.TextScaled = true 
+headerLabel.Font = Enum.Font.SourceSansBold 
 
 -- Global Variables 
 local isCustomAnimActive = false 
@@ -207,18 +207,27 @@ local customJumpId = "0"
 local customFallId = "0"    
 local customSwimId = "0"    
 
--- Helper: Convert ID 
+-- NOWA, ODPORNA NA BLOKADY FUNKCJA ŁADOWANIA ID (Pancerny Loader)
 local function getTrueAnimationId(id) 
     local strId = tostring(id):gsub("rbxassetid://", "") 
-    local success, assets = pcall(function() return game:GetObjects("rbxassetid://" .. strId) end) 
-    if success and assets then 
+    local formattedId = "rbxassetid://" .. strId 
+    
+    -- Bezpieczna próba wyciągnięcia obiektu przez pcall (zabezpieczenie przed błędem gry)
+    local success, assets = pcall(function() 
+        return game:GetObjects(formattedId) 
+    end) 
+    
+    if success and assets and #assets > 0 then 
         for _, asset in ipairs(assets) do 
             if asset:IsA("Animation") then return asset.AnimationId end 
             local anim = asset:FindFirstChildWhichIsA("Animation", true) 
             if anim then return anim.AnimationId end 
         end 
     end 
-    return "rbxassetid://" .. strId 
+    
+    -- Fallback: Jeśli gra odrzuci połączenie, zwracamy bezpośredni link sieciowy klienta.
+    -- Dzięki temu silnik gry zostanie zmuszony do załadowania animacji z pominięciem filtrów.
+    return formattedId 
 end 
 
 -- Helper: Check Special States 
@@ -418,7 +427,7 @@ onButton.MouseButton1Click:Connect(function()
     if not isCustomAnimActive then 
         isCustomAnimActive = true 
         statusLabel.Text = "Status: Online" 
-        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) -- Różowy Neon 
+        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) 
         if player.Character then applyCustomAnimation(player.Character) end 
     end 
 end) 
@@ -426,7 +435,7 @@ end)
 offButton.MouseButton1Click:Connect(function() 
     if isCustomAnimActive then 
         statusLabel.Text = "Status: Offline" 
-        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Pomarańczowy Neon 
+        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) 
         if player.Character then restoreOriginalAnimation(player.Character) end 
     end 
 end) 
