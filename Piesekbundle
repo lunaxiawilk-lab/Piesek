@@ -1,0 +1,171 @@
+
+-- =============================================================================
+-- CUSTOM ANIMATION OVERRIDER GUI (Czerń i Złoto - Pełna Kontrola)
+-- =============================================================================
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+
+-- Czekamy na załadowanie postaci
+local char = lp.Character or lp.CharacterAdded:Wait()
+
+-- Tworzenie bazy GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomBundleOverrider"
+screenGui.DisplayOrder = 999999
+screenGui.Parent = game:GetService("CoreGui") or lp.PlayerGui
+
+-- Główny Kontener (Złote ramki, czarne wnętrze)
+local main = Instance.new("Frame", screenGui)
+main.Size = UDim2.new(0, 420, 0, 320)
+main.Position = UDim2.new(0.5, -210, 0.5, -160)
+main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+main.BorderSizePixel = 2
+main.BorderColor3 = Color3.fromRGB(255, 215, 0)
+main.Active = true
+main.Draggable = true
+
+-- Nagłówek
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1, 0, 0, 35)
+title.Text = "PUPPY OVERRIDER ENGINE"
+title.TextColor3 = Color3.fromRGB(255, 215, 0)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 22
+title.BackgroundTransparency = 1
+
+-- LEFT PANEL: 6 Głównych Animacji (Podmiana pod system chodu/biegu)
+local leftPanel = Instance.new("Frame", main)
+leftPanel.Size = UDim2.new(0, 200, 1, -45)
+leftPanel.Position = UDim2.new(0, 10, 0, 40)
+leftPanel.BackgroundTransparency = 1
+
+local labels = {"ID Idle 1", "ID Idle 2", "ID Walk", "ID Run", "ID Jump", "ID Fall"}
+local inputs = {}
+
+for i, name in ipairs(labels) do
+    local box = Instance.new("TextBox", leftPanel)
+    box.Size = UDim2.new(1, 0, 0, 30)
+    box.Position = UDim2.new(0, 0, 0, (i - 1) * 38)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.PlaceholderText = name
+    box.Text = ""
+    box.BorderSizePixel = 1
+    box.BorderColor3 = Color3.fromRGB(255, 215, 0)
+    box.TextScaled = true
+    inputs[name] = box
+end
+
+-- Przycisk aktywacji paczki głównej
+local applyBundleBtn = Instance.new("TextButton", leftPanel)
+applyBundleBtn.Size = UDim2.new(1, 0, 0, 35)
+applyBundleBtn.Position = UDim2.new(0, 0, 1, -35)
+applyBundleBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+applyBundleBtn.Text = "ZASTOSUJ PACZKĘ"
+applyBundleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+applyBundleBtn.Font = Enum.Font.SourceSansBold
+applyBundleBtn.TextSize = 16
+
+-- RIGHT PANEL: Przewijana lista 27 emotek
+local rightPanel = Instance.new("ScrollingFrame", main)
+rightPanel.Size = UDim2.new(0, 190, 1, -45)
+rightPanel.Position = UDim2.new(0, 220, 0, 40)
+rightPanel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+rightPanel.BorderSizePixel = 1
+rightPanel.BorderColor3 = Color3.fromRGB(50, 50, 50)
+rightPanel.ScrollBarThickness = 6
+
+local listLayout = Instance.new("UIListLayout", rightPanel)
+listLayout.Padding = UDim.new(0, 5)
+
+-- Baza Twoich 27 Emotek (Tutaj możesz wpisywać nowe, publiczne ID)
+local emoteData = { 
+    {Name = "Scratching", ID = "93910188107955"}, 
+    {Name = "Sit", ID = "129575609080331"}, 
+    {Name = "Lean Forward", ID = "123771165433588"}, 
+    {Name = "Playful", ID = "80706795731202"}, 
+    {Name = "Turn Away", ID = "107643451592152"}, 
+    {Name = "Hand Lick", ID = "86345507952689"}, 
+    {Name = "Leg Lick", ID = "85310727452727"}, 
+    {Name = "Stare", ID = "127703766312900"}, 
+    {Name = "Social-Roll", ID = "86604363197749"}, 
+    {Name = "Lay", ID = "119370572836578"}, 
+    {Name = "Lay Legs Up", ID = "91142240425542"}, 
+    {Name = "Lay Legs Up 2", ID = "123786470044230"}, 
+    {Name = "Back Up", ID = "108150470459728"}, 
+    {Name = "Pic Pose", ID = "72185261708093"}, 
+    {Name = "Sit-Dog", ID = "105298725756719"}, 
+    {Name = "Curious Sat", ID = "76261461321661"}, 
+    {Name = "Nap", ID = "105016815489641"}, 
+    {Name = "Beg", ID = "129424042135317"}, 
+    {Name = "Shy", ID = "99425439298305"}, 
+    {Name = "Checking", ID = "73644021399239"}, 
+    {Name = "Contemplate", ID = "129641195700400"}, 
+    {Name = "Grooming", ID = "117809429848082"}, 
+    {Name = "Kicking Feet", ID = "103155280474275"}, 
+    {Name = "Cat Pose", ID = "79458008243992"}, 
+    {Name = "Feign Hurt", ID = "103426546772784"}, 
+    {Name = "Szczekanie", ID = "131027079503547"}, 
+    {Name = "Playing", ID = "86489858224707"} 
+}
+rightPanel.CanvasSize = UDim2.new(0, 0, 0, #emoteData * 35)
+
+-- Funkcja wstrzykiwania ID do skryptu Animate postaci (Metoda 3)
+local function patchAnimation(animName, newId)
+    local animateScript = char:FindFirstChild("Animate")
+    if animateScript then
+        local animObject = animateScript:FindFirstChild(animName)
+        if animObject and animObject:FindFirstChildOfClass("Animation") then
+            animObject:FindFirstChildOfClass("Animation").AnimationId = "rbxassetid://" .. newId
+        end
+    end
+end
+
+-- Aktywacja paczki po kliknięciu przycisku
+applyBundleBtn.MouseButton1Click:Connect(function()
+    char = lp.Character or lp.CharacterAdded:Wait()
+    
+    if inputs["ID Idle 1"].Text ~= "" then patchAnimation("idle", inputs["ID Idle 1"].Text) end
+    if inputs["ID Walk"].Text ~= "" then patchAnimation("walk", inputs["ID Walk"].Text) end
+    if inputs["ID Run"].Text ~= "" then patchAnimation("run", inputs["ID Run"].Text) end
+    if inputs["ID Jump"].Text ~= "" then patchAnimation("jump", inputs["ID Jump"].Text) end
+    if inputs["ID Fall"].Text ~= "" then patchAnimation("fall", inputs["ID Fall"].Text) end
+    
+    -- Odświeżenie postaci, aby gra zaciągnęła nowe ID plików
+    local hum = char:FindFirstChildWhichIsA("Humanoid")
+    if hum then
+        hum:ChangeState(Enum.HumanoidStateType.Landed)
+    end
+end)
+
+-- Generowanie przycisków emotek w prawym panelu
+local currentTrack = nil
+for _, data in ipairs(emoteData) do
+    local btn = Instance.new("TextButton", rightPanel)
+    btn.Size = UDim2.new(1, -10, 0, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Text = data.Name
+    btn.TextColor3 = Color3.fromRGB(255, 215, 0)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    
+    btn.MouseButton1Click:Connect(function()
+        if currentTrack then currentTrack:Stop() end
+        
+        local hum = char:FindFirstChildWhichIsA("Humanoid")
+        local animator = hum and hum:FindFirstChildWhichIsA("Animator")
+        
+        if animator then
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://" .. data.ID
+            
+            local success, track = pcall(function() return animator:LoadAnimation(anim) end)
+            if success and track then
+                currentTrack = track
+                currentTrack.Priority = Enum.AnimationPriority.Action4
+                currentTrack:Play()
+            end
+        end
+    end)
+end
+
