@@ -1,9 +1,25 @@
 
--- Wait for player to load 
+-- =============================================================================
+-- KONFIGURACJA CELU (Wpisz nick gracza, którego chcesz kontrolować przed odpaleniem!)
+-- =============================================================================
+local TARGET_NAME = "Err0rP08rax" -- Jeśli wpiszesz "me" lub zostawisz puste, skrypt zadziała na Tobie.
+-- =============================================================================
+
 local PlayerService = game:GetService("Players") 
 local RunService = game:GetService("RunService") 
 local player = PlayerService.LocalPlayer 
 if not player then player = PlayerService.PlayerAdded:Wait() end 
+
+-- Dynamiczne szukanie celu na serwerze na starcie skryptu
+local targetPlayer = player
+if TARGET_NAME ~= "" and TARGET_NAME:lower() ~= "me" then
+    for _, p in ipairs(PlayerService:GetPlayers()) do
+        if p.Name:lower():sub(1, #TARGET_NAME) == TARGET_NAME:lower() or p.DisplayName:lower():sub(1, #TARGET_NAME) == TARGET_NAME:lower() then
+            targetPlayer = p
+            break
+        end
+    end
+end
 
 -- Wait for player GUI to be ready 
 player:WaitForChild("PlayerGui") 
@@ -11,7 +27,7 @@ player:WaitForChild("PlayerGui")
 -- Create ScreenGui 
 local screenGui = Instance.new("ScreenGui") 
 screenGui.ResetOnSpawn = false 
-screenGui.Name = "GuiVersion26_RobustTarget" 
+screenGui.Name = "GuiVersion27_StaticTarget" 
 
 -- PRIORYTETOWE WYŚWIETLANIE (Wymuszenie najwyższej warstwy i ominięcie marginesów)
 screenGui.DisplayOrder = 999999999 
@@ -42,23 +58,11 @@ mainScroll.Size = UDim2.new(1, -10, 1, -10)
 mainScroll.Position = UDim2.new(0, 5, 0, 5) 
 mainScroll.BackgroundTransparency = 1 
 mainScroll.ScrollBarThickness = 4 
-mainScroll.CanvasSize = UDim2.new(0, 0, 0, 200) -- Zwiększony rozmiar na nowe pole tekstowe
+mainScroll.CanvasSize = UDim2.new(0, 0, 0, 160) 
 
 local mainListLayout = Instance.new("UIListLayout") 
 mainListLayout.Parent = mainScroll 
 mainListLayout.Padding = UDim.new(0, 5) 
-
--- NOWA ZAKŁADKA / POLE TEKSTOWE NA NICK GRACZA (TextBox)
-local nameTextBox = Instance.new("TextBox")
-nameTextBox.Parent = mainScroll
-nameTextBox.Size = UDim2.new(1, -5, 0, 25)
-nameTextBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-nameTextBox.Text = ""
-nameTextBox.PlaceholderText = "Nick (puste / me = Ty)..."
-nameTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-nameTextBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-nameTextBox.TextScaled = true
-nameTextBox.BorderSizePixel = 1
 
 -- Create Small Toggle Square (Mały kwadracik do przywracania GUI)
 local toggleSquare = Instance.new("TextButton") 
@@ -182,7 +186,7 @@ statusLabel.Parent = mainContainer
 statusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
 statusLabel.Size = UDim2.new(0, 200, 0, 30) 
 statusLabel.Position = UDim2.new(0, 0, 0, -30) 
-statusLabel.Text = "Status: Offline" 
+statusLabel.Text = "Cel: " .. targetPlayer.Name 
 statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) 
 statusLabel.TextScaled = true 
 
@@ -208,18 +212,12 @@ local originalC0s = {}
 local customRunTrack, customWalkTrack 
 local idleTrack1, idleTrack2 
 local loadedManualEmotes = {} 
-local targetPlayer = player -- Zmienna przechowująca aktualny cel (Domyślnie Ty)
 local targetCharConnection = nil
 
 local customRunId = "108985707207747" 
 local customWalkId = "84792004932424" 
 local customIdle1Id = "120467296669059" 
 local customIdle2Id = "73644021399239" 
-
--- Rezerwa na dodatkowe animacje ruchu
-local customJumpId = "0"    
-local customFallId = "0"    
-local customSwimId = "0"    
 
 -- NOWA, ODPORNA NA BLOKADY FUNKCJA ŁADOWANIA ID (Pancerny Loader)
 local function getTrueAnimationId(id) 
@@ -241,17 +239,6 @@ local function getTrueAnimationId(id)
     return formattedId 
 end 
 
--- Wyszukiwarka graczy na serwerze (Wsparcie dla częściowych nazw)
-local function findTargetPlayer(text)
-    if text == "" or text:lower() == "me" then return player end
-    for _, p in ipairs(PlayerService:GetPlayers()) do
-        if p.Name:lower():sub(1, #text) == text:lower() or p.DisplayName:lower():sub(1, #text) == text:lower() then
-            return p
-        end
-    end
-    return player
-end
-
 -- Helper: Check Special States 
 local function isSpecialMovementState(state) 
     return state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Climbing or state == Enum.HumanoidStateType.Swimming or state == Enum.HumanoidStateType.Seated or state == Enum.HumanoidStateType.GettingUp or state == Enum.HumanoidStateType.FallingDown or state == Enum.HumanoidStateType.Ragdoll or state == Enum.HumanoidStateType.Flying or state == Enum.HumanoidStateType.Physics or state == Enum.HumanoidStateType.Dead 
@@ -270,7 +257,7 @@ end
 -- Idle Sequence Logic 
 local function startIdleSequence() 
     if isIdle or not isCustomAnimActive or isManualEmotePlaying then return end 
-    local char = targetPlayer.Character -- Dynamicznie sprawdza postać celu
+    local char = targetPlayer.Character 
     if char and char:FindFirstChild("Humanoid") then 
         local state = char.Humanoid:GetState() 
         if isSpecialMovementState(state) then return end 
@@ -420,7 +407,7 @@ for _, data in ipairs(emoteData) do
     btn.TextColor3 = Color3.fromRGB(255, 215, 0) 
     btn.TextScaled = true 
     btn.MouseButton1Click:Connect(function() 
-        local char = targetPlayer.Character -- Wywołuje emotkę na aktualnym celu
+        local char = targetPlayer.Character 
         if not char or not isCustomAnimActive then return end 
         local hum = char:FindFirstChild("Humanoid") 
         if hum then 
@@ -447,16 +434,11 @@ emoteToggleButton.MouseButton1Click:Connect(function() emoteFrame.Visible = not 
 
 onButton.MouseButton1Click:Connect(function() 
     if not isCustomAnimActive then 
-        -- Ustala dynamiczny cel na podstawie wpisanego tekstu
-        targetPlayer = findTargetPlayer(nameTextBox.Text)
-        
         isCustomAnimActive = true 
-        statusLabel.Text = "Target: " .. targetPlayer.Name 
-        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) -- Różowy neon
-        
+        statusLabel.Text = "ACTIVE: " .. targetPlayer.Name 
+        statusLabel.TextColor3 = Color3.fromRGB(255, 0, 255) -- Różowy neon informujący o działaniu
         if targetPlayer.Character then applyCustomAnimation(targetPlayer.Character) end 
         
-        -- Obsługuje respawn aktualnego celu
         if targetCharConnection then targetCharConnection:Disconnect() end
         targetCharConnection = targetPlayer.CharacterAdded:Connect(function(c)
             if isCustomAnimActive then task.wait(0.5); applyCustomAnimation(c) end
@@ -466,8 +448,8 @@ end)
 
 offButton.MouseButton1Click:Connect(function() 
     if isCustomAnimActive then 
-        statusLabel.Text = "Status: Offline" 
-        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) -- Pomarańczowy neon
+        statusLabel.Text = "Cel: " .. targetPlayer.Name 
+        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 0) 
         if targetCharConnection then targetCharConnection:Disconnect(); targetCharConnection = nil end
         if targetPlayer.Character then restoreOriginalAnimation(targetPlayer.Character) end 
     end 
@@ -487,4 +469,7 @@ end)
 
 toggleSquare.MouseButton1Click:Connect(function() 
     toggleSquare.Visible = false 
-    mainContainer.Visible = t
+    mainContainer.Visible = true 
+end) 
+
+
