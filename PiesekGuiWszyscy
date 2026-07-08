@@ -1,80 +1,95 @@
 
--- SERWER-SIDE PUPPY MASTER (Wersja Finalna: Strict Target)
+-- STRICT SERVER-SIDE TARGETER (Wersja 3.0 - Czysta Logika)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- UI
-local screenGui = Instance.new("ScreenGui", game:GetService("CoreGui") or LocalPlayer:FindFirstChild("PlayerGui"))
-local main = Instance.new("Frame", screenGui)
-main.Size = UDim2.new(0, 200, 0, 180); main.Position = UDim2.new(0.5, -100, 0.5, -90)
-main.BackgroundColor3 = Color3.fromRGB(20, 20, 20); main.Active = true; main.Draggable = true
+-- GUI SETUP
+local screenGui = Instance.new("ScreenGui", game:GetService("CoreGui") or LocalPlayer.PlayerGui)
+screenGui.Name = "PuppyTargetGui"
 
-local nameBox = Instance.new("TextBox", main)
-nameBox.Size = UDim2.new(1, -10, 0, 30); nameBox.Position = UDim2.new(0, 5, 0, 5)
-nameBox.PlaceholderText = "Wpisz nick ofiary..."; nameBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+local mainContainer = Instance.new("Frame", screenGui)
+mainContainer.Size = UDim2.new(0, 200, 0, 150)
+mainContainer.Position = UDim2.new(0.5, -100, 0.5, -75)
+mainContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mainContainer.Active = true
+mainContainer.Draggable = true
+mainContainer.BorderSizePixel = 2
 
-local onBtn = Instance.new("TextButton", main)
-onBtn.Size = UDim2.new(1, -10, 0, 30); onBtn.Position = UDim2.new(0, 5, 0, 40)
-onBtn.Text = "ON (Przejmij)"; onBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+local nameInput = Instance.new("TextBox", mainContainer)
+nameInput.Size = UDim2.new(1, -10, 0, 30)
+nameInput.Position = UDim2.new(0, 5, 0, 10)
+nameInput.PlaceholderText = "Nick gracza..."
+nameInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+nameInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local status = Instance.new("TextLabel", main)
-status.Size = UDim2.new(1, -10, 0, 30); status.Position = UDim2.new(0, 5, 0, 75)
-status.Text = "Status: Oczekiwanie"; status.BackgroundTransparency = 1
+local onBtn = Instance.new("TextButton", mainContainer)
+onBtn.Size = UDim2.new(1, -10, 0, 35)
+onBtn.Position = UDim2.new(0, 5, 0, 50)
+onBtn.Text = "ON (Przejęcie)"
+onBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+onBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
 
--- Zmienne celu
+local offBtn = Instance.new("TextButton", mainContainer)
+offBtn.Size = UDim2.new(1, -10, 0, 35)
+offBtn.Position = UDim2.new(0, 5, 0, 95)
+offBtn.Text = "OFF (Przywróć)"
+offBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+offBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+
+-- LOGIKA
 local targetPlayer = nil
 local activeAnims = {}
 
--- IDs - tutaj Twoje 4 główne animacje
-local ANIMS = {
-    Run = "rbxassetid://108985707207747",
-    Walk = "rbxassetid://84792004932424",
-    Idle1 = "rbxassetid://120467296669059",
-    Idle2 = "rbxassetid://73644021399239"
-}
+local function getTrueId(id) return "rbxassetid://" .. tostring(id) end
 
--- Znajdowanie gracza
-local function getTarget(name)
+local function applyAnimations(char)
+    local hum = char:WaitForChild("Humanoid")
+    local animate = char:FindFirstChild("Animate")
+    
+    -- Kluczowy moment: Usuwamy oryginalne skrypty ruchu gracza
+    if animate then animate:Destroy() end
+    
+    local anims = {
+        Run = getTrueId("108985707207747"),
+        Walk = getTrueId("84792004932424"),
+        Idle1 = getTrueId("120467296669059"),
+        Idle2 = getTrueId("73644021399239")
+    }
+
+    local animator = hum:FindFirstChild("Animator") or Instance.new("Animator", hum)
+    
+    for name, id in pairs(anims) do
+        local anim = Instance.new("Animation")
+        anim.AnimationId = id
+        local track = animator:LoadAnimation(anim)
+        track:Play()
+        activeAnims[name] = track
+    end
+end
+
+local function findTarget(name)
     for _, p in pairs(Players:GetPlayers()) do
         if p.Name:lower():sub(1, #name) == name:lower() then return p end
     end
     return nil
 end
 
--- GŁÓWNA LOGIKA PRZEJMOWANIA (Server-Side)
-local function takeover(player)
-    local char = player.Character
-    if not char then return end
-    
-    -- 1. Usuwamy oryginalny system animacji (KLUCZOWE)
-    local animate = char:FindFirstChild("Animate")
-    if animate then animate:Destroy() end
-    
-    -- 2. Tworzymy nowy Animator
-    local hum = char:FindFirstChild("Humanoid")
-    local animator = hum:FindFirstChild("Animator") or Instance.new("Animator", hum)
-    
-    -- 3. Ładujemy nasze animacje
-    for name, id in pairs(ANIMS) do
-        local a = Instance.new("Animation")
-        a.AnimationId = id
-        activeAnims[name] = animator:LoadAnimation(a)
-    end
-    
-    -- 4. Uruchamiamy pętlę zachowania (idle)
-    status.Text = "Przejęto: " .. player.Name
-    activeAnims.Idle1:Play()
-end
-
--- PRZYCISK ON
 onBtn.MouseButton1Click:Connect(function()
-    local found = getTarget(nameBox.Text)
-    if found then
-        targetPlayer = found
-        takeover(targetPlayer)
-    else
-        status.Text = "Nie znaleziono gracza!"
+    local p = findTarget(nameInput.Text)
+    if p and p.Character then
+        targetPlayer = p
+        applyAnimations(p.Character)
+        print("Przejęto kontrolę nad: " .. p.Name)
+    end
+end)
+
+offBtn.MouseButton1Click:Connect(function()
+    if targetPlayer and targetPlayer.Character then
+        -- Tutaj przywracamy domyślne animacje (np. poprzez reset postaci)
+        targetPlayer.Character:BreakJoints() 
+        targetPlayer = nil
+        for _, track in pairs(activeAnims) do track:Stop() end
     end
 end)
 
