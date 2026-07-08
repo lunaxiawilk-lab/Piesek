@@ -487,6 +487,4 @@ end)
 
 toggleSquare.MouseButton1Click:Connect(function() 
     toggleSquare.Visible = false 
-    mainContainer.Visible = true 
-end) 
-
+    mainContainer.Visible = t
