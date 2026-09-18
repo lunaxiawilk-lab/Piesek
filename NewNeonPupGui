@@ -1,34 +1,29 @@
 --// =========================================================
---// 🐾 PUPPY BOY GUI - MODERN NEON EDITION
+--// 🐾 PUPPY BOY GUI v2 - COMPLETE NEON EDITION
 --// =========================================================
 
---// SERVICES
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
---// PLAYER
 local player = Players.LocalPlayer
-
 if not player then
     player = Players.PlayerAdded:Wait()
 end
 
 local playerGui = player:WaitForChild("PlayerGui")
 
---// =========================================================
---// CONFIG
---// =========================================================
+--============================================================
+-- CONFIG
+--============================================================
 
 local GUI_NAME = "PuppyBoyGui_Modern"
 
 local COLORS = {
     Background = Color3.fromRGB(18, 18, 28),
-    Background2 = Color3.fromRGB(25, 25, 38),
-
+    Background2 = Color3.fromRGB(25, 18, 40),
     Panel = Color3.fromRGB(30, 30, 45),
-    Panel2 = Color3.fromRGB(38, 38, 55),
+    Panel2 = Color3.fromRGB(40, 40, 58),
 
     Purple = Color3.fromRGB(170, 80, 255),
     Blue = Color3.fromRGB(70, 170, 255),
@@ -39,146 +34,160 @@ local COLORS = {
     Orange = Color3.fromRGB(255, 170, 70),
 
     Text = Color3.fromRGB(240, 240, 250),
-    Muted = Color3.fromRGB(160, 165, 180),
+    Muted = Color3.fromRGB(160, 165, 180)
 }
 
---// =========================================================
---// ANIMATIONS
---// =========================================================
+--============================================================
+-- ANIMATION IDS
+--============================================================
 
 local customRunId = "108985707207747"
 local customWalkId = "84792004932424"
+
 local customIdle1Id = "120467296669059"
 local customIdle2Id = "73644021399239"
 
 local emoteData = {
-    {Name = "Scratching", Emoji = "🐾", ID = "93910188107955"},
-    {Name = "Sit", Emoji = "🪑", ID = "129575609080331"},
-    {Name = "Lean Forward", Emoji = "👀", ID = "123771165433588"},
-    {Name = "Playful", Emoji = "😸", ID = "80706795731202"},
-    {Name = "Turn Away", Emoji = "🙈", ID = "107643451592152"},
-    {Name = "Hand Lick", Emoji = "🐱", ID = "86345507952689"},
-    {Name = "Leg Lick", Emoji = "🐾", ID = "85310727452727"},
-    {Name = "Stare", Emoji = "👁️", ID = "127703766312900"},
-    {Name = "Social-Roll", Emoji = "🔄", ID = "86604363197749"},
-    {Name = "Lay", Emoji = "😴", ID = "119370572836578"},
-    {Name = "Lay Legs Up", Emoji = "🛌", ID = "91142240425542"},
-    {Name = "Lay Legs Up 2", Emoji = "🛌", ID = "123786470044230"},
-    {Name = "Back Up", Emoji = "↩️", ID = "108150470459728"},
-    {Name = "Pic Pose", Emoji = "📸", ID = "72185261708093"},
-    {Name = "Sit-Dog", Emoji = "🐶", ID = "105298725756719"},
-    {Name = "Curious Sat Pose", Emoji = "❓", ID = "76261461321661"},
-    {Name = "Nap", Emoji = "💤", ID = "105016815489641"},
-    {Name = "Beg", Emoji = "🥺", ID = "129424042135317"},
-    {Name = "Shy", Emoji = "👉👈", ID = "99425439298305"},
-    {Name = "Checking", Emoji = "🔎", ID = "73644021399239"},
-    {Name = "Contemplate", Emoji = "🤔", ID = "129641195700400"},
-    {Name = "Grooming", Emoji = "🧼", ID = "117809429848082"},
-    {Name = "Kicking Feet", Emoji = "🦶", ID = "103155280474275"},
-    {Name = "Cat Pose", Emoji = "🐈", ID = "79458008243992"},
-    {Name = "Feign Hurt", Emoji = "💥", ID = "103426546772784"},
-    {Name = "Pies Szczeka", Emoji = "🐕", ID = "131027079503547"},
-    {Name = "Playing", Emoji = "🎮", ID = "86489858224707"},
+    {"Scratching", "🐾", "93910188107955"},
+    {"Sit", "🪑", "129575609080331"},
+    {"Lean Forward", "👀", "123771165433588"},
+    {"Playful", "😸", "80706795731202"},
+    {"Turn Away", "🙈", "107643451592152"},
+    {"Hand Lick", "🐱", "86345507952689"},
+    {"Leg Lick", "🐾", "85310727452727"},
+    {"Stare", "👁️", "127703766312900"},
+    {"Social-Roll", "🔄", "86604363197749"},
+    {"Lay", "😴", "119370572836578"},
+    {"Lay Legs Up", "🛌", "91142240425542"},
+    {"Lay Legs Up 2", "🛌", "123786470044230"},
+    {"Back Up", "↩️", "108150470459728"},
+    {"Pic Pose", "📸", "72185261708093"},
+    {"Sit-Dog", "🐶", "105298725756719"},
+    {"Curious Sat Pose", "❓", "76261461321661"},
+    {"Nap", "💤", "105016815489641"},
+    {"Beg", "🥺", "129424042135317"},
+    {"Shy", "👉👈", "99425439298305"},
+    {"Checking", "🔎", "73644021399239"},
+    {"Contemplate", "🤔", "129641195700400"},
+    {"Grooming", "🧼", "117809429848082"},
+    {"Kicking Feet", "🦶", "103155280474275"},
+    {"Cat Pose", "🐈", "79458008243992"},
+    {"Feign Hurt", "💥", "103426546772784"},
+    {"Pies Szczeka", "🐕", "131027079503547"},
+    {"Playing", "🎮", "86489858224707"}
 }
 
---// =========================================================
---// STATE
---// =========================================================
-
-local isCustomAnimActive = false
-local isManualEmotePlaying = false
-local isIdle = false
-
-local currentMovementState = "Stopped"
-
-local charConnections = {}
-local originalC0s = {}
-
-local customRunTrack
-local customWalkTrack
-
-local idleTrack1
-local idleTrack2
-
-local idleSequenceTask
-
-local loadedManualEmotes = {}
-
---// =========================================================
---// HELPERS
---// =========================================================
-
-local function animationId(id)
-    id = tostring(id)
-
-    if id:find("rbxassetid://") then
-        return id
-    end
-
-    return "rbxassetid://" .. id
-end
-
---// IMPORTANT:
---// Nie używamy game:GetObjects() / asset:IsA().
---// ID animacji jest używane bezpośrednio.
-
-local function stopTrack(track, fade)
-    if track then
-        pcall(function()
-            track:Stop(fade or 0.2)
-        end)
-    end
-end
-
-local function playTrack(track, fade)
-    if track then
-        pcall(function()
-            track:Play(fade or 0.2)
-        end)
-    end
-end
-
-local function isSpecialMovementState(state)
-    return
-        state == Enum.HumanoidStateType.Jumping
-        or state == Enum.HumanoidStateType.Freefall
-        or state == Enum.HumanoidStateType.Climbing
-        or state == Enum.HumanoidStateType.Swimming
-        or state == Enum.HumanoidStateType.Seated
-        or state == Enum.HumanoidStateType.GettingUp
-        or state == Enum.HumanoidStateType.FallingDown
-        or state == Enum.HumanoidStateType.Ragdoll
-        or state == Enum.HumanoidStateType.Flying
-        or state == Enum.HumanoidStateType.Physics
-        or state == Enum.HumanoidStateType.Dead
-end
-
-local function stopAllManualTracks()
-    isManualEmotePlaying = false
-    isIdle = false
-
-    if idleSequenceTask then
-        task.cancel(idleSequenceTask)
-        idleSequenceTask = nil
-    end
-
-    stopTrack(idleTrack1)
-    stopTrack(idleTrack2)
-
-    for _, track in pairs(loadedManualEmotes) do
-        stopTrack(track)
-    end
-end
-
---// =========================================================
---// GUI
---// =========================================================
+--============================================================
+-- CLEAN OLD GUI
+--============================================================
 
 local oldGui = playerGui:FindFirstChild(GUI_NAME)
 
 if oldGui then
     oldGui:Destroy()
 end
+
+--============================================================
+-- STATE
+--============================================================
+
+local character
+local humanoid
+local animator
+
+local enabled = false
+local manualEmotePlaying = false
+local destroyed = false
+
+local runTrack
+local walkTrack
+local idleTrack1
+local idleTrack2
+
+local emoteTracks = {}
+
+local connections = {}
+local idleToken = 0
+
+--============================================================
+-- HELPERS
+--============================================================
+
+local function animationId(id)
+    id = tostring(id)
+
+    if id:find("rbxassetid://", 1, true) then
+        return id
+    end
+
+    return "rbxassetid://" .. id
+end
+
+local function stopTrack(track, fade)
+    if track then
+        pcall(function()
+            track:Stop(fade or 0.15)
+        end)
+    end
+end
+
+local function destroyTrack(track)
+    if track then
+        pcall(function()
+            track:Stop(0)
+            track:Destroy()
+        end)
+    end
+end
+
+local function stopAllTracks()
+    stopTrack(runTrack)
+    stopTrack(walkTrack)
+    stopTrack(idleTrack1)
+    stopTrack(idleTrack2)
+
+    for _, track in pairs(emoteTracks) do
+        stopTrack(track)
+    end
+end
+
+local function disconnectAll()
+    for _, connection in ipairs(connections) do
+        pcall(function()
+            connection:Disconnect()
+        end)
+    end
+
+    table.clear(connections)
+end
+
+local function createAnimation(id, priority, looped)
+    if not animator then
+        return nil
+    end
+
+    local animation = Instance.new("Animation")
+    animation.AnimationId = animationId(id)
+
+    local success, track = pcall(function()
+        return animator:LoadAnimation(animation)
+    end)
+
+    animation:Destroy()
+
+    if not success or not track then
+        return nil
+    end
+
+    track.Priority = priority
+    track.Looped = looped
+
+    return track
+end
+
+--============================================================
+-- GUI
+--============================================================
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = GUI_NAME
@@ -187,159 +196,210 @@ screenGui.IgnoreGuiInset = true
 screenGui.DisplayOrder = 999
 screenGui.Parent = playerGui
 
---// MAIN WINDOW
+--============================================================
+-- MAIN WINDOW
+--============================================================
 
-local mainContainer = Instance.new("Frame")
-mainContainer.Name = "MainWindow"
-mainContainer.Parent = screenGui
-mainContainer.Size = UDim2.fromOffset(360, 440)
-mainContainer.Position = UDim2.new(0.5, -180, 0.5, -220)
-mainContainer.BackgroundColor3 = COLORS.Background
-mainContainer.BorderSizePixel = 0
+local main = Instance.new("Frame")
+main.Name = "MainWindow"
+main.Size = UDim2.fromOffset(360, 440)
+main.Position = UDim2.new(0.5, -180, 0.5, -220)
+main.BackgroundColor3 = COLORS.Background
+main.BorderSizePixel = 0
+main.Parent = screenGui
 
 local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 18)
-mainCorner.Parent = mainContainer
+mainCorner.Parent = main
 
 local mainStroke = Instance.new("UIStroke")
 mainStroke.Color = COLORS.Purple
 mainStroke.Thickness = 1.5
-mainStroke.Transparency = 0.25
-mainStroke.Parent = mainContainer
+mainStroke.Transparency = 0.2
+mainStroke.Parent = main
 
---// GRADIENT
-
-local backgroundGradient = Instance.new("UIGradient")
-backgroundGradient.Color = ColorSequence.new({
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, COLORS.Background),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 18, 40))
+    ColorSequenceKeypoint.new(1, COLORS.Background2)
 })
-backgroundGradient.Rotation = 135
-backgroundGradient.Parent = mainContainer
+gradient.Rotation = 135
+gradient.Parent = main
 
---// HEADER
+--============================================================
+-- DRAG SYSTEM
+--============================================================
+
+local function makeDraggable(frame, handle)
+    handle = handle or frame
+
+    local dragging = false
+    local dragStart
+    local startPosition
+
+    local began = handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            dragging = true
+            dragStart = input.Position
+            startPosition = frame.Position
+        end
+    end)
+
+    local changed = handle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            local moveConnection
+
+            moveConnection = input.Changed:Connect(function()
+                if not dragging then
+                    if moveConnection then
+                        moveConnection:Disconnect()
+                    end
+                    return
+                end
+
+                local delta = input.Position - dragStart
+
+                frame.Position = UDim2.new(
+                    startPosition.X.Scale,
+                    startPosition.X.Offset + delta.X,
+                    startPosition.Y.Scale,
+                    startPosition.Y.Offset + delta.Y
+                )
+            end)
+
+            table.insert(connections, moveConnection)
+        end
+    end)
+
+    local ended = UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            dragging = false
+        end
+    end)
+
+    table.insert(connections, began)
+    table.insert(connections, changed)
+    table.insert(connections, ended)
+end
+
+--============================================================
+-- HEADER
+--============================================================
 
 local header = Instance.new("Frame")
-header.Name = "Header"
-header.Parent = mainContainer
-header.Size = UDim2.new(1, 0, 0, 72)
+header.Size = UDim2.new(1, 0, 0, 70)
 header.BackgroundTransparency = 1
-
---// ICON
+header.Parent = main
 
 local icon = Instance.new("TextLabel")
-icon.Parent = header
 icon.BackgroundTransparency = 1
-icon.Position = UDim2.fromOffset(18, 14)
-icon.Size = UDim2.fromOffset(45, 45)
+icon.Position = UDim2.fromOffset(18, 12)
+icon.Size = UDim2.fromOffset(44, 44)
 icon.Text = "🐾"
 icon.TextScaled = true
-icon.Font = Enum.Font.GothamBold
-
---// TITLE
+icon.Parent = header
 
 local title = Instance.new("TextLabel")
-title.Parent = header
 title.BackgroundTransparency = 1
-title.Position = UDim2.fromOffset(70, 12)
+title.Position = UDim2.fromOffset(70, 10)
 title.Size = UDim2.new(1, -130, 0, 30)
 title.Text = "Puppy Boy"
 title.TextColor3 = COLORS.Text
 title.TextSize = 22
 title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
 
 local subtitle = Instance.new("TextLabel")
-subtitle.Parent = header
 subtitle.BackgroundTransparency = 1
-subtitle.Position = UDim2.fromOffset(72, 39)
-subtitle.Size = UDim2.new(1, -140, 0, 20)
+subtitle.Position = UDim2.fromOffset(72, 38)
+subtitle.Size = UDim2.new(1, -130, 0, 20)
 subtitle.Text = "Modern Animation System"
 subtitle.TextColor3 = COLORS.Muted
-subtitle.TextSize = 12
+subtitle.TextSize = 11
 subtitle.Font = Enum.Font.Gotham
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
-
---// CLOSE
+subtitle.Parent = header
 
 local closeButton = Instance.new("TextButton")
-closeButton.Parent = header
 closeButton.Size = UDim2.fromOffset(38, 38)
-closeButton.Position = UDim2.new(1, -50, 0, 17)
-closeButton.BackgroundColor3 = Color3.fromRGB(50, 30, 45)
+closeButton.Position = UDim2.new(1, -50, 0, 16)
+closeButton.BackgroundColor3 = Color3.fromRGB(55, 30, 45)
 closeButton.Text = "×"
 closeButton.TextColor3 = COLORS.Red
 closeButton.TextSize = 25
 closeButton.Font = Enum.Font.GothamBold
 closeButton.AutoButtonColor = false
+closeButton.Parent = header
 
 local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 10)
 closeCorner.Parent = closeButton
 
---// STATUS
+--============================================================
+-- STATUS
+--============================================================
 
-local statusFrame = Instance.new("Frame")
-statusFrame.Parent = mainContainer
-statusFrame.Position = UDim2.fromOffset(16, 82)
-statusFrame.Size = UDim2.new(1, -32, 0, 46)
-statusFrame.BackgroundColor3 = COLORS.Panel
-statusFrame.BorderSizePixel = 0
+local status = Instance.new("Frame")
+status.Position = UDim2.fromOffset(16, 80)
+status.Size = UDim2.new(1, -32, 0, 48)
+status.BackgroundColor3 = COLORS.Panel
+status.BorderSizePixel = 0
+status.Parent = main
 
 local statusCorner = Instance.new("UICorner")
 statusCorner.CornerRadius = UDim.new(0, 12)
-statusCorner.Parent = statusFrame
+statusCorner.Parent = status
 
 local statusDot = Instance.new("TextLabel")
-statusDot.Parent = statusFrame
 statusDot.BackgroundTransparency = 1
 statusDot.Position = UDim2.fromOffset(12, 7)
 statusDot.Size = UDim2.fromOffset(30, 30)
 statusDot.Text = "🔴"
 statusDot.TextScaled = true
+statusDot.Parent = status
 
 local statusLabel = Instance.new("TextLabel")
-statusLabel.Parent = statusFrame
 statusLabel.BackgroundTransparency = 1
 statusLabel.Position = UDim2.fromOffset(48, 5)
-statusLabel.Size = UDim2.new(1, -58, 0, 20)
+statusLabel.Size = UDim2.new(1, -60, 0, 20)
 statusLabel.Text = "Offline"
 statusLabel.TextColor3 = COLORS.Red
 statusLabel.TextSize = 15
 statusLabel.Font = Enum.Font.GothamBold
 statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.Parent = status
 
 local statusInfo = Instance.new("TextLabel")
-statusInfo.Parent = statusFrame
 statusInfo.BackgroundTransparency = 1
-statusInfo.Position = UDim2.fromOffset(48, 24)
-statusInfo.Size = UDim2.new(1, -58, 0, 16)
+statusInfo.Position = UDim2.fromOffset(48, 25)
+statusInfo.Size = UDim2.new(1, -60, 0, 16)
 statusInfo.Text = "Animation system disabled"
 statusInfo.TextColor3 = COLORS.Muted
 statusInfo.TextSize = 10
 statusInfo.Font = Enum.Font.Gotham
 statusInfo.TextXAlignment = Enum.TextXAlignment.Left
+statusInfo.Parent = status
 
---// CONTENT
-
-local content = Instance.new("Frame")
-content.Parent = mainContainer
-content.Position = UDim2.fromOffset(16, 140)
-content.Size = UDim2.new(1, -32, 1, -156)
-content.BackgroundTransparency = 1
-
---// BUTTON FACTORY
+--============================================================
+-- BUTTON FACTORY
+--============================================================
 
 local function createButton(parent, text, emoji, position, size)
     local button = Instance.new("TextButton")
-
-    button.Parent = parent
     button.Position = position
     button.Size = size
     button.BackgroundColor3 = COLORS.Panel
     button.BorderSizePixel = 0
     button.Text = ""
     button.AutoButtonColor = false
+    button.Parent = parent
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 12)
@@ -347,384 +407,741 @@ local function createButton(parent, text, emoji, position, size)
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = COLORS.Purple
-    stroke.Transparency = 0.75
+    stroke.Transparency = 0.7
     stroke.Thickness = 1
     stroke.Parent = button
 
     local emojiLabel = Instance.new("TextLabel")
-    emojiLabel.Parent = button
     emojiLabel.BackgroundTransparency = 1
-    emojiLabel.Position = UDim2.fromOffset(12, 5)
-    emojiLabel.Size = UDim2.fromOffset(30, 30)
+    emojiLabel.Position = UDim2.fromOffset(12, 4)
+    emojiLabel.Size = UDim2.fromOffset(32, 32)
     emojiLabel.Text = emoji
     emojiLabel.TextScaled = true
+    emojiLabel.Parent = button
 
     local textLabel = Instance.new("TextLabel")
-    textLabel.Parent = button
     textLabel.BackgroundTransparency = 1
-    textLabel.Position = UDim2.fromOffset(48, 0)
+    textLabel.Position = UDim2.fromOffset(50, 0)
     textLabel.Size = UDim2.new(1, -58, 1, 0)
     textLabel.Text = text
     textLabel.TextColor3 = COLORS.Text
-    textLabel.TextSize = 14
-    textLabel.Font = Enum.Font.GothamMedium
+    textLabel.TextSize = 13
+    textLabel.Font = Enum.Font.GothamBold
     textLabel.TextXAlignment = Enum.TextXAlignment.Left
+    textLabel.Parent = button
 
     button.MouseEnter:Connect(function()
         TweenService:Create(
             button,
-            TweenInfo.new(0.15),
-            {
-                BackgroundColor3 = COLORS.Panel2
-            }
-        ):Play()
-
-        TweenService:Create(
-            stroke,
-            TweenInfo.new(0.15),
-            {
-                Transparency = 0.25
-            }
+            TweenInfo.new(0.12),
+            {BackgroundColor3 = COLORS.Panel2}
         ):Play()
     end)
 
     button.MouseLeave:Connect(function()
         TweenService:Create(
             button,
-            TweenInfo.new(0.15),
-            {
-                BackgroundColor3 = COLORS.Panel
-            }
-        ):Play()
-
-        TweenService:Create(
-            stroke,
-            TweenInfo.new(0.15),
-            {
-                Transparency = 0.75
-            }
+            TweenInfo.new(0.12),
+            {BackgroundColor3 = COLORS.Panel}
         ):Play()
     end)
 
     return button
 end
 
---// ON
+--============================================================
+-- MAIN BUTTONS
+--============================================================
 
-local onButton = createButton(
-    content,
-    "Enable animations",
+local enableButton = createButton(
+    main,
+    "Enable",
     "🟢",
-    UDim2.fromOffset(0, 0),
-    UDim2.new(1, 0, 0, 48)
+    UDim2.fromOffset(16, 142),
+    UDim2.new(0.5, -22, 0, 52)
 )
 
---// OFF
-
-local offButton = createButton(
-    content,
-    "Disable animations",
+local disableButton = createButton(
+    main,
+    "Disable",
     "🔴",
-    UDim2.fromOffset(0, 58),
-    UDim2.new(1, 0, 0, 48)
+    UDim2.new(0.5, 6, 0, 142),
+    UDim2.new(0.5, -22, 0, 52)
 )
 
---// EMOTES
-
-local emoteToggleButton = createButton(
-    content,
+local emotesButton = createButton(
+    main,
     "Open Emotes",
-    "😸",
-    UDim2.fromOffset(0, 116),
-    UDim2.new(1, 0, 0, 48)
+    "🐶",
+    UDim2.fromOffset(16, 202),
+    UDim2.new(1, -32, 0, 52)
 )
 
---// HIDE
-
-local hideButton = createButton(
-    content,
-    "Minimize GUI",
+local minimizeButton = createButton(
+    main,
+    "Minimize",
     "➖",
-    UDim2.fromOffset(0, 174),
-    UDim2.new(1, 0, 0, 48)
+    UDim2.fromOffset(16, 262),
+    UDim2.new(0.5, -22, 0, 52)
 )
-
---// DESTROY
 
 local destroyButton = createButton(
-    content,
-    "Destroy GUI",
+    main,
+    "Destroy",
     "🗑️",
-    UDim2.fromOffset(0, 232),
-    UDim2.new(1, 0, 0, 48)
+    UDim2.new(0.5, 6, 0, 262),
+    UDim2.new(0.5, -22, 0, 52)
 )
 
---// =========================================================
---// EMOTE WINDOW
---// =========================================================
+local info = Instance.new("TextLabel")
+info.BackgroundTransparency = 1
+info.Position = UDim2.fromOffset(20, 330)
+info.Size = UDim2.new(1, -40, 0, 80)
+info.Text =
+    "🐾 Puppy Boy Animation System\n\n" ..
+    "Walk • Run • Idle • Emotes\n" ..
+    "Mobile + PC compatible"
+info.TextColor3 = COLORS.Muted
+info.TextSize = 11
+info.Font = Enum.Font.Gotham
+info.TextWrapped = true
+info.TextXAlignment = Enum.TextXAlignment.Center
+info.Parent = main
 
-local emoteFrame = Instance.new("Frame")
-emoteFrame.Name = "EmoteWindow"
-emoteFrame.Parent = screenGui
-emoteFrame.Size = UDim2.fromOffset(300, 430)
-emoteFrame.Position = UDim2.new(0.5, 190, 0.5, -215)
-emoteFrame.BackgroundColor3 = COLORS.Background
-emoteFrame.BorderSizePixel = 0
-emoteFrame.Visible = false
+--============================================================
+-- EMOTE WINDOW
+--============================================================
+
+local emoteWindow = Instance.new("Frame")
+emoteWindow.Name = "EmoteWindow"
+emoteWindow.Size = UDim2.fromOffset(320, 450)
+emoteWindow.Position = UDim2.new(0.5, 190, 0.5, -225)
+emoteWindow.BackgroundColor3 = COLORS.Background
+emoteWindow.BorderSizePixel = 0
+emoteWindow.Visible = false
+emoteWindow.Parent = screenGui
 
 local emoteCorner = Instance.new("UICorner")
 emoteCorner.CornerRadius = UDim.new(0, 18)
-emoteCorner.Parent = emoteFrame
+emoteCorner.Parent = emoteWindow
 
 local emoteStroke = Instance.new("UIStroke")
-emoteStroke.Color = COLORS.Blue
+emoteStroke.Color = COLORS.Cyan
 emoteStroke.Thickness = 1.5
-emoteStroke.Transparency = 0.25
-emoteStroke.Parent = emoteFrame
+emoteStroke.Transparency = 0.2
+emoteStroke.Parent = emoteWindow
 
---// EMOTE HEADER
-
-local emoteHeader = Instance.new("TextLabel")
-emoteHeader.Parent = emoteFrame
+local emoteHeader = Instance.new("Frame")
+emoteHeader.Size = UDim2.new(1, 0, 0, 58)
 emoteHeader.BackgroundTransparency = 1
-emoteHeader.Position = UDim2.fromOffset(18, 12)
-emoteHeader.Size = UDim2.new(1, -36, 0, 35)
-emoteHeader.Text = "😸  Emotes"
-emoteHeader.TextColor3 = COLORS.Text
-emoteHeader.TextSize = 20
-emoteHeader.Font = Enum.Font.GothamBold
-emoteHeader.TextXAlignment = Enum.TextXAlignment.Left
+emoteHeader.Parent = emoteWindow
 
---// SEARCH
+local emoteTitle = Instance.new("TextLabel")
+emoteTitle.BackgroundTransparency = 1
+emoteTitle.Position = UDim2.fromOffset(16, 10)
+emoteTitle.Size = UDim2.new(1, -70, 0, 38)
+emoteTitle.Text = "🐾 Emotes"
+emoteTitle.TextColor3 = COLORS.Text
+emoteTitle.TextSize = 20
+emoteTitle.Font = Enum.Font.GothamBold
+emoteTitle.TextXAlignment = Enum.TextXAlignment.Left
+emoteTitle.Parent = emoteHeader
+
+local emoteClose = Instance.new("TextButton")
+emoteClose.Size = UDim2.fromOffset(36, 36)
+emoteClose.Position = UDim2.new(1, -48, 0, 11)
+emoteClose.BackgroundColor3 = COLORS.Panel
+emoteClose.Text = "×"
+emoteClose.TextColor3 = COLORS.Red
+emoteClose.TextSize = 23
+emoteClose.Font = Enum.Font.GothamBold
+emoteClose.Parent = emoteHeader
+
+local ec = Instance.new("UICorner")
+ec.CornerRadius = UDim.new(0, 10)
+ec.Parent = emoteClose
+
+--============================================================
+-- SEARCH
+--============================================================
 
 local searchBox = Instance.new("TextBox")
-searchBox.Parent = emoteFrame
-searchBox.Position = UDim2.fromOffset(14, 55)
-searchBox.Size = UDim2.new(1, -28, 0, 38)
+searchBox.Position = UDim2.fromOffset(12, 64)
+searchBox.Size = UDim2.new(1, -24, 0, 40)
 searchBox.BackgroundColor3 = COLORS.Panel
 searchBox.BorderSizePixel = 0
-searchBox.PlaceholderText = "🔎  Search emotes..."
+searchBox.PlaceholderText = "🔎 Search emotes..."
 searchBox.PlaceholderColor3 = COLORS.Muted
 searchBox.Text = ""
 searchBox.TextColor3 = COLORS.Text
-searchBox.TextSize = 13
+searchBox.TextSize = 12
 searchBox.Font = Enum.Font.Gotham
 searchBox.ClearTextOnFocus = false
+searchBox.Parent = emoteWindow
 
 local searchCorner = Instance.new("UICorner")
 searchCorner.CornerRadius = UDim.new(0, 10)
 searchCorner.Parent = searchBox
 
---// SCROLL
+--============================================================
+-- EMOTE SCROLL
+--============================================================
 
 local scroll = Instance.new("ScrollingFrame")
-scroll.Parent = emoteFrame
-scroll.Position = UDim2.fromOffset(12, 102)
-scroll.Size = UDim2.new(1, -24, 1, -114)
+scroll.Position = UDim2.fromOffset(12, 114)
+scroll.Size = UDim2.new(1, -24, 1, -126)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.ScrollBarThickness = 4
 scroll.ScrollBarImageColor3 = COLORS.Purple
-scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.CanvasSize = UDim2.new()
+scroll.Parent = emoteWindow
 
-local listLayout = Instance.new("UIListLayout")
-listLayout.Parent = scroll
-listLayout.Padding = UDim.new(0, 7)
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local list = Instance.new("UIListLayout")
+list.Padding = UDim.new(0, 6)
+list.SortOrder = Enum.SortOrder.LayoutOrder
+list.Parent = scroll
 
---// =========================================================
---// EMOTE BUTTONS
---// =========================================================
+list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scroll.CanvasSize = UDim2.fromOffset(
+        0,
+        list.AbsoluteContentSize.Y + 10
+    )
+end)
+
+--============================================================
+-- LOAD CHARACTER
+--============================================================
+
+local function loadCharacter(char)
+    if destroyed then
+        return
+    end
+
+    disconnectAll()
+
+    stopAllTracks()
+
+    character = char
+    humanoid = char:WaitForChild("Humanoid", 10)
+
+    if not humanoid then
+        return
+    end
+
+    animator = humanoid:FindFirstChildOfClass("Animator")
+
+    if not animator then
+        animator = Instance.new("Animator")
+        animator.Parent = humanoid
+    end
+
+    runTrack = createAnimation(
+        customRunId,
+        Enum.AnimationPriority.Movement,
+        true
+    )
+
+    walkTrack = createAnimation(
+        customWalkId,
+        Enum.AnimationPriority.Movement,
+        true
+    )
+
+    idleTrack1 = createAnimation(
+        customIdle1Id,
+        Enum.AnimationPriority.Idle,
+        true
+    )
+
+    idleTrack2 = createAnimation(
+        customIdle2Id,
+        Enum.AnimationPriority.Idle,
+        true
+    )
+
+    table.clear(emoteTracks)
+
+    for _, data in ipairs(emoteData) do
+        local name = data[1]
+        local id = data[3]
+
+        local track = createAnimation(
+            id,
+            Enum.AnimationPriority.Action4,
+            false
+        )
+
+        if track then
+            emoteTracks[name] = track
+        end
+    end
+
+    if enabled then
+        statusInfo.Text = "Character loaded • Ready"
+    end
+end
+
+--============================================================
+-- IDLE
+--============================================================
+
+local function startIdle()
+    if not enabled or manualEmotePlaying then
+        return
+    end
+
+    idleToken += 1
+    local token = idleToken
+
+    stopTrack(runTrack)
+    stopTrack(walkTrack)
+
+    stopTrack(idleTrack1)
+    stopTrack(idleTrack2)
+
+    if not idleTrack1 then
+        return
+    end
+
+    idleTrack1.Looped = true
+    idleTrack1:Play(0.25)
+
+    task.spawn(function()
+        task.wait(7)
+
+        if token ~= idleToken then
+            return
+        end
+
+        if not enabled or manualEmotePlaying then
+            return
+        end
+
+        if idleTrack1 then
+            idleTrack1:Stop(0.4)
+        end
+
+        if idleTrack2 then
+            idleTrack2.Looped = true
+            idleTrack2:Play(0.4)
+        end
+
+        task.wait(7)
+
+        if token ~= idleToken then
+            return
+        end
+
+        if not enabled or manualEmotePlaying then
+            return
+        end
+
+        startIdle()
+    end)
+end
+
+--============================================================
+-- MOVEMENT
+--============================================================
+
+local function updateMovement(speed)
+    if not enabled or manualEmotePlaying then
+        return
+    end
+
+    if not humanoid then
+        return
+    end
+
+    local state = humanoid:GetState()
+
+    if state == Enum.HumanoidStateType.Jumping
+        or state == Enum.HumanoidStateType.Freefall
+        or state == Enum.HumanoidStateType.FallingDown
+        or state == Enum.HumanoidStateType.Ragdoll
+        or state == Enum.HumanoidStateType.Dead then
+
+        stopTrack(walkTrack)
+        stopTrack(runTrack)
+        stopTrack(idleTrack1)
+        stopTrack(idleTrack2)
+
+        return
+    end
+
+    if speed <= 0.1 then
+        startIdle()
+        return
+    end
+
+    idleToken += 1
+
+    stopTrack(idleTrack1)
+    stopTrack(idleTrack2)
+
+    if speed >= 12 then
+        stopTrack(walkTrack)
+
+        if runTrack and not runTrack.IsPlaying then
+            runTrack.Looped = true
+            runTrack:Play(0.2)
+        end
+
+        if runTrack then
+            runTrack:AdjustSpeed(
+                math.clamp(speed / 16, 0.7, 1.6)
+            )
+        end
+
+    else
+        stopTrack(runTrack)
+
+        if walkTrack and not walkTrack.IsPlaying then
+            walkTrack.Looped = true
+            walkTrack:Play(0.2)
+        end
+
+        if walkTrack then
+            walkTrack:AdjustSpeed(
+                math.clamp(speed / 8, 0.7, 1.5)
+            )
+        end
+    end
+end
+
+--============================================================
+-- ENABLE
+--============================================================
+
+local function enableSystem()
+    if destroyed then
+        return
+    end
+
+    if not humanoid then
+        return
+    end
+
+    enabled = true
+    manualEmotePlaying = false
+
+    statusDot.Text = "🟢"
+    statusLabel.Text = "Online"
+    statusLabel.TextColor3 = COLORS.Green
+    statusInfo.Text = "Animation system enabled"
+
+    table.insert(
+        connections,
+        humanoid.Running:Connect(updateMovement)
+    )
+
+    table.insert(
+        connections,
+        humanoid.StateChanged:Connect(function(_, newState)
+            if newState == Enum.HumanoidStateType.Jumping
+                or newState == Enum.HumanoidStateType.Freefall then
+
+                idleToken += 1
+
+                stopTrack(walkTrack)
+                stopTrack(runTrack)
+                stopTrack(idleTrack1)
+                stopTrack(idleTrack2)
+            end
+        end)
+    )
+
+    startIdle()
+end
+
+--============================================================
+-- DISABLE
+--============================================================
+
+local function disableSystem()
+    enabled = false
+    manualEmotePlaying = false
+
+    idleToken += 1
+
+    stopAllTracks()
+
+    statusDot.Text = "🔴"
+    statusLabel.Text = "Offline"
+    statusLabel.TextColor3 = COLORS.Red
+    statusInfo.Text = "Animation system disabled"
+
+    disconnectAll()
+
+    -- Character loading connection will be restored below.
+    if character and humanoid then
+        -- nothing
+    end
+end
+
+--============================================================
+-- EMOTE PLAY
+--============================================================
+
+local function playEmote(name)
+    if not enabled then
+        statusInfo.Text = "Enable animation system first"
+        return
+    end
+
+    local track = emoteTracks[name]
+
+    if not track then
+        statusInfo.Text = "Animation unavailable: " .. name
+        return
+    end
+
+    manualEmotePlaying = true
+    idleToken += 1
+
+    stopTrack(walkTrack)
+    stopTrack(runTrack)
+    stopTrack(idleTrack1)
+    stopTrack(idleTrack2)
+
+    for _, otherTrack in pairs(emoteTracks) do
+        if otherTrack ~= track then
+            stopTrack(otherTrack)
+        end
+    end
+
+    track.Looped = false
+
+    pcall(function()
+        track:Play(0.2)
+    end)
+
+    statusInfo.Text = "Playing: " .. name
+
+    task.spawn(function()
+        local start = os.clock()
+
+        while track.IsPlaying and os.clock() - start < 30 do
+            task.wait(0.1)
+        end
+
+        if manualEmotePlaying then
+            manualEmotePlaying = false
+
+            if enabled then
+                statusInfo.Text = "Animation system enabled"
+                startIdle()
+            end
+        end
+    end)
+end
+
+--============================================================
+-- CREATE EMOTE BUTTONS
+--============================================================
 
 local emoteButtons = {}
 
 for index, data in ipairs(emoteData) do
+    local name = data[1]
+    local emoji = data[2]
 
     local button = Instance.new("TextButton")
-    button.Name = data.Name
-    button.Parent = scroll
-    button.Size = UDim2.new(1, -5, 0, 42)
+    button.Name = name
+    button.Size = UDim2.new(1, -4, 0, 42)
     button.BackgroundColor3 = COLORS.Panel
     button.BorderSizePixel = 0
     button.Text = ""
-    button.AutoButtonColor = false
     button.LayoutOrder = index
+    button.AutoButtonColor = false
+    button.Parent = scroll
 
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = button
 
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = COLORS.Purple
-    stroke.Transparency = 0.8
-    stroke.Thickness = 1
-    stroke.Parent = button
+    local emojiLabel = Instance.new("TextLabel")
+    emojiLabel.BackgroundTransparency = 1
+    emojiLabel.Position = UDim2.fromOffset(10, 5)
+    emojiLabel.Size = UDim2.fromOffset(30, 30)
+    emojiLabel.Text = emoji
+    emojiLabel.TextScaled = true
+    emojiLabel.Parent = button
 
-    local emoji = Instance.new("TextLabel")
-    emoji.Parent = button
-    emoji.BackgroundTransparency = 1
-    emoji.Position = UDim2.fromOffset(8, 5)
-    emoji.Size = UDim2.fromOffset(32, 32)
-    emoji.Text = data.Emoji
-    emoji.TextScaled = true
-
-    local label = Instance.new("TextLabel")
-    label.Parent = button
-    label.BackgroundTransparency = 1
-    label.Position = UDim2.fromOffset(48, 0)
-    label.Size = UDim2.new(1, -55, 1, 0)
-    label.Text = data.Name
-    label.TextColor3 = COLORS.Text
-    label.TextSize = 13
-    label.Font = Enum.Font.GothamMedium
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    emoteButtons[index] = {
-        Button = button,
-        Name = data.Name
-    }
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Position = UDim2.fromOffset(48, 0)
+    nameLabel.Size = UDim2.new(1, -58, 1, 0)
+    nameLabel.Text = name
+    nameLabel.TextColor3 = COLORS.Text
+    nameLabel.TextSize = 12
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Parent = button
 
     button.MouseEnter:Connect(function()
-        TweenService:Create(
-            button,
-            TweenInfo.new(0.12),
-            {
-                BackgroundColor3 = COLORS.Panel2
-            }
-        ):Play()
-
-        TweenService:Create(
-            stroke,
-            TweenInfo.new(0.12),
-            {
-                Transparency = 0.3
-            }
-        ):Play()
+        button.BackgroundColor3 = COLORS.Panel2
     end)
 
     button.MouseLeave:Connect(function()
-        TweenService:Create(
-            button,
-            TweenInfo.new(0.12),
-            {
-                BackgroundColor3 = COLORS.Panel
-            }
-        ):Play()
-
-        TweenService:Create(
-            stroke,
-            TweenInfo.new(0.12),
-            {
-                Transparency = 0.8
-            }
-        ):Play()
+        button.BackgroundColor3 = COLORS.Panel
     end)
 
-    button.MouseButton1Click:Connect(function()
-
-        local character = player.Character
-
-        if not character or not isCustomAnimActive then
-            return
-        end
-
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-        if not humanoid then
-            return
-        end
-
-        local state = humanoid:GetState()
-
-        if humanoid.MoveDirection.Magnitude >= 0.1 then
-            return
-        end
-
-        if isSpecialMovementState(state) then
-            return
-        end
-
-        local track = loadedManualEmotes[data.Name]
-
-        if not track then
-            return
-        end
-
-        stopAllManualTracks()
-
-        isManualEmotePlaying = true
-
-        playTrack(track, 0.25)
-
-        local connection
-
-        connection = track.Stopped:Connect(function()
-
-            isManualEmotePlaying = false
-
-            if connection then
-                connection:Disconnect()
-            end
-
-            if humanoid
-                and humanoid.Parent
-                and humanoid.MoveDirection.Magnitude < 0.1
-            then
-                task.wait(0.1)
-
-                if isCustomAnimActive then
-                    startIdleSequence()
-                end
-            end
-        end)
+    button.Activated:Connect(function()
+        playEmote(name)
     end)
+
+    emoteButtons[name] = button
 end
 
---// =========================================================
---// SEARCH
---// =========================================================
+--============================================================
+-- SEARCH FILTER
+--============================================================
 
 searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-
     local query = string.lower(searchBox.Text)
 
-    for _, item in ipairs(emoteButtons) do
+    for _, data in ipairs(emoteData) do
+        local name = data[1]
+        local button = emoteButtons[name]
 
-        local matches =
-            query == ""
-            or string.find(
-                string.lower(item.Name),
-                query,
-                1,
-                true
-            )
+        if button then
+            if query == ""
+                or string.find(string.lower(name), query, 1, true) then
 
-        item.Button.Visible = matches
+                button.Visible = true
+            else
+                button.Visible = false
+            end
+        end
     end
 end)
 
---// =========================================================
---// DRAG SYSTEM
---// =========================================================
+--============================================================
+-- BUTTON EVENTS
+--============================================================
 
-local function makeDraggable(frame, handle)
+enableButton.Activated:Connect(function()
+    if enabled then
+        statusInfo.Text = "Already enabled"
+        return
+    end
 
-    local dragging = false
-    local dragStart
-    local startPosition
+    enableSystem()
+end)
 
-    handle.InputBegan:Connect(function(input)
+disableButton.Activated:Connect(function()
+    disableSystem()
+end)
 
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch
-        then
+emotesButton.Activated:Connect(function()
+    emoteWindow.Visible = not emoteWindow.Visible
+end)
 
-            dragging = true
-            dragStart = input.Position
-            startPosition = frame.Position
+emoteClose.Activated:Connect(function()
+    emoteWindow.Visible = false
+end)
 
-            input.Changed:Connect(function()
+local minimized = false
+local normalSize = main.Size
 
-                if input.UserInputState == Enum.UserInputState.End then
-      
+minimizeButton.Activated:Connect(function()
+    minimized = not minimized
+
+    if minimized then
+        main.Size = UDim2.fromOffset(360, 75)
+
+        for _, child in ipairs(main:GetChildren()) do
+            if child ~= header
+                and child ~= mainStroke
+                and child ~= mainCorner
+                and child ~= gradient then
+
+                if child:IsA("GuiObject") then
+                    child.Visible = false
+                end
+            end
+        end
+
+        header.Visible = true
+    else
+        main.Size = normalSize
+
+        for _, child in ipairs(main:GetChildren()) do
+            if child:IsA("GuiObject") then
+                child.Visible = true
+            end
+        end
+    end
+end)
+
+destroyButton.Activated:Connect(function()
+    destroyed = true
+
+    disableSystem()
+
+    disconnectAll()
+
+    if screenGui then
+        screenGui:Destroy()
+    end
+end)
+
+closeButton.Activated:Connect(function()
+    if emoteWindow.Visible then
+        emoteWindow.Visible = false
+    else
+        main.Visible = false
+    end
+end)
+
+--============================================================
+-- DRAG
+--============================================================
+
+makeDraggable(main, header)
+makeDraggable(emoteWindow, emoteHeader)
+
+--============================================================
+-- CHARACTER RESPAWN
+--============================================================
+
+table.insert(
+    connections,
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.5)
+
+        if destroyed then
+            return
+        end
+
+        loadCharacter(char)
+
+        if enabled then
+            task.wait(0.3)
+            enableSystem()
+        end
+    end)
+)
+
+--============================================================
+-- INITIAL CHARACTER
+--============================================================
+
+if player.Character then
+    task.spawn(function()
+        loadCharacter(player.Character)
+    end)
+else
+    local char = player.CharacterAdded:Wait()
+    loadCharacter(char)
+end
+
+--============================================================
+-- FINAL
+--============================================================
+
+statusInfo.Text = "Ready • Press Enable"
+
+print("🐾 Puppy Boy GUI v2 loaded successfully!")
