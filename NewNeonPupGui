@@ -34,10 +34,10 @@ local COLORS = {
 -- ANIMATION IDS
 --============================================================
 
-local customRunId = "108985707207747"
+local customRunId = "135323028794768"
 local customWalkId = "84792004932424"
-local customIdle1Id = "120467296669059"
-local customIdle2Id = "73644021399239"
+local customIdle1Id = "86181656352739"
+local customIdle2Id = "82252292555492"
 
 local emoteData = {
     {"Scratching", "🐾", "93910188107955"},
