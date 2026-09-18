@@ -1,9 +1,3 @@
-NewNeonPupGui.lua — Puppy Boy GUI v4
-Skrypt Lua. Możesz otworzyć ten dokument w Wordzie i skopiować całą zawartość do pliku NewNeonPupGui na GitHubie.
---// =========================================================
---// 🐾 PUPPY BOY GUI v4 — NEON + MOVABLE WINDOWS
---// =========================================================
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -1234,6 +1228,7 @@ table.insert(
 --============================================================
 -- INITIAL CHARACTER
 --============================================================
+
 if player.Character then
     task.spawn(function()
         loadCharacter(player.Character)
